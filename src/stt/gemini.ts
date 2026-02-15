@@ -48,20 +48,21 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
     1. **Language**: High proficiency in Uzbek/Russian mixed speech (auto parts context).
     2. **Category**: Often refers to the Car Model (e.g., "Lacetti", "Damas", "Cobalt"). Map this to 'category'.
     3. **Firma**: Extract brand or manufacturer name (e.g., "Povergrip", "Vesmo").
-    4. **Numbers**: 
-       - Support DECIMALS. "10.4", "2.7" should be parsed exactly as numbers.
-       - "25 ming" -> 25000.
+    4. **Name**: Captures FULL product name. "Zupchatka remen" -> "Zupchatka remen", NOT just "Zupchatka".
+    5. **Numbers & Decimals**: 
+       - Support spoken decimals like "10 u 3" (10 point 3) or "10 butun 5" -> **10.3**, **10.5**.
+       - "on u besh" -> 10.5
+       - "milliy" or "ming" -> multiply by 1000 if context implies price.
        - **IMPORTANT**: If a number (quantity/price) is NOT mentioned, set it to null. Do NOT default to 0.
-    5. **Currency**:
-       - If price is small (e.g. 1.2, 10.5, 50) and no currency mentioned, it is likely **USD** if consistent with car parts logic, OR check for "dollar" context. But usually small numbers like 1-100 are dollars, large numbers like 10000+ are sums.
+    6. **Currency**:
        - "dollar", "$", "u.e." -> "USD"
        - "sum", "so'm", "ming" -> "UZS"
-       - Default to "UZS" if ambiguous and large number. Default "USD" if small number (< 1000).
+       - Default to "UZS" if ambiguous and large number. "USD" if small number (< 1000) or decimal.
     
     Return a valid JSON array of objects.
     Example Output:
     [
-        { "name": "Zupchatka", "category": "Lacetti", "firma": "Povergrip", "code": "5499", "quantity": 10, "cost_price": 10.4, "sale_price": null, "currency": "USD" },
+        { "name": "Zupchatka remen", "category": "Lacetti", "firma": "Povergrip", "code": "5499", "quantity": 10, "cost_price": 10.3, "sale_price": null, "currency": "USD" },
         { "name": "Kallektor", "category": "Spark", "firma": "Vesmo", "code": "670", "quantity": null, "cost_price": 1.1, "sale_price": 1.7, "currency": "USD" }
     ]
     `;
