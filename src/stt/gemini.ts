@@ -56,7 +56,8 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
     **Inference Rules (How to understand the user):**
     1. **Structure is Flexible**: Users might say "Spark kallektor 10 ta" OR "10 ta kallektor Spark uchun". You must figure it out.
     2. **Identify the Car Model**: Words like "Spark", "Cobalt", "Gentra", "Nexia", "Malibu" are almost ALWAYS the **Category**.
-       - **Include Numbers**: If you hear "Malibu bir", "Nexia 2", "Nexia ikki", the number is PART OF THE CAR MODEL. Output: "Malibu 1", "Nexia 2".
+       - **Include Numbers AND Decimals**: If you hear "Malibu bir", "Nexia 2", "Nexia ikki", the number is PART OF THE CAR MODEL. Output: "Malibu 1", "Nexia 2".
+       - **Include Engine Sizes**: "Spark 1.25", "Nexia 1.5" -> Output: "Spark 1.25", "Nexia 1.5" (decimal is part of car model, NOT a price).
        - **NEVER put car models in firma field**: Nexia is a car, NOT a brand.
     3. **Capture FULL Product Names**:
        - Include ALL descriptive words: "Nufta rabochiy silindr" -> name: "Nufta rabochiy silindr" (keep "Nufta").
