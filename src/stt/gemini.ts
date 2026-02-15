@@ -38,6 +38,8 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
 
     **Fields to Extract:**
     - name (string): The core product name (e.g., "Zupchatka remen", "Kallektor prokladka").
+        - **CRITICAL**: Write the product name EXACTLY as the user says it. Do NOT translate, change, or "correct" the name.
+        - **ONLY apply these specific fixes**: "kollektor"/"kollekter" -> "kallektor", "robochiy"/"rabochey" -> "rabochiy".
     - category (string): Car Model (e.g., "Spark", "Cobalt", "Lacetti", "Damas", "Nexia").
     - firma (string): Brand/Manufacturer (e.g., "Powergrip", "Gates", "Vesmo", "GMB", "Valeo").
         - *Hint*: If a word looks like a brand name, map it here.
