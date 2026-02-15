@@ -40,7 +40,7 @@ export class GoogleSheetsService {
             // Headers: Name, Firma, Code, Category, Quantity, Cost, Sale, Currency, Date
             const rows = products.map(p => {
                 return {
-                    'Maxsulot nomi': p.name,
+                    'Maxsulot nomi': p.name || 'Nomsiz',
                     'Firma': p.firma || '',
                     'Kodi': p.code || '',
                     'Mashina turi': p.category || '',
