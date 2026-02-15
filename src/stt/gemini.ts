@@ -59,6 +59,7 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
        - **NEVER put car models in firma field**: Nexia is a car, NOT a brand.
     3. **Capture FULL Product Names**:
        - Include ALL descriptive words: "Nufta rabochiy silindr" -> name: "Nufta rabochiy silindr" (keep "Nufta").
+       - **EXCLUDE car model names from product name**: "Lacetti kallektor" -> name: "Kallektor", category: "Lacetti" (NOT "Lacetti kallektor").
        - Don't drop prefixes or adjectives that describe the product.
     4. **Identify the Brand**: Words like "Gates", "Powergrip", "Vesmo" are the **Firma**.
     4. **Separate Name from Price**:
