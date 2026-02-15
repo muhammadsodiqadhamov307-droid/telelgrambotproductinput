@@ -86,7 +86,7 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
     Output: [{"name": "Amortizator", "category": "Cobalt", "cost_price": 10.4, "currency": "USD"}]
     `;
 
-    const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
 
     let result;
     let attempts = 0;
@@ -99,13 +99,22 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
         } catch (error: any) {
             attempts++;
             console.error(`Gemini API Error (Attempt ${attempts}/${maxAttempts}):`, error.message);
+            console.error(`Error status: ${error.status}`);
 
             if (attempts >= maxAttempts) throw error;
+
+            // Retry on 429 (Rate Limit) with longer delay
+            if (error.status === 429 || error.message?.includes('429') || error.message?.includes('Too Many Requests')) {
+                const delay = 20000 * attempts; // 20s, 40s, 60s
+                console.log(`Rate limit hit. Retrying in ${delay}ms...`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+                continue;
+            }
 
             // Retry on 503 (Service Unavailable) or 500+ errors
             if (error.message?.includes('503') || error.status === 503) {
                 const delay = 1500 * attempts;
-                console.log(`Retrying in ${delay}ms...`);
+                console.log(`Service unavailable. Retrying in ${delay}ms...`);
                 await new Promise(resolve => setTimeout(resolve, delay));
                 continue;
             }
