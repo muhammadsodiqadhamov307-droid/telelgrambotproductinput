@@ -74,7 +74,31 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
     const genAI = getNextGenAI();
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 
-    const result = await model.generateContent([prompt, audioPart]);
+    let result;
+    let attempts = 0;
+    const maxAttempts = 3;
+
+    while (attempts < maxAttempts) {
+        try {
+            result = await model.generateContent([prompt, audioPart]);
+            break;
+        } catch (error: any) {
+            attempts++;
+            console.error(`Gemini API Error (Attempt ${attempts}/${maxAttempts}):`, error.message);
+
+            if (attempts >= maxAttempts) throw error;
+
+            // Retry on 503 (Service Unavailable) or 500+ errors
+            if (error.message?.includes('503') || error.status === 503) {
+                const delay = 1500 * attempts;
+                console.log(`Retrying in ${delay}ms...`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+                continue;
+            }
+            throw error;
+        }
+    }
+
     const response = await result.response;
     const text = response.text();
 
