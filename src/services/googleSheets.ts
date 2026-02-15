@@ -59,7 +59,7 @@ export class GoogleSheetsService {
                 rowData[findHeader('Sana')] = new Date().toISOString().split('T')[0];
 
                 // Find header for User Name (support aliases)
-                const userHeaderName = headerValues.find(h =>
+                const userHeaderName = headerValues.find((h: string) =>
                     ['foydalanuvchi', 'user name', 'username', 'user'].includes(h.trim().toLowerCase())
                 ) || 'User Name';
 
