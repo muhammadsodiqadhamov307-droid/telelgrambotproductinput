@@ -25,7 +25,7 @@ export class GoogleSheetsService {
         }
     }
 
-    async appendProducts(products: ProductDraft[]): Promise<boolean> {
+    async appendProducts(products: ProductDraft[], userName: string): Promise<boolean> {
         if (!this.doc) return false;
 
         try {
@@ -57,6 +57,7 @@ export class GoogleSheetsService {
                 rowData[findHeader('Sotish narxi')] = p.sale_price || '';
                 rowData[findHeader('Valyuta')] = p.currency || 'USD';
                 rowData[findHeader('Sana')] = new Date().toISOString().split('T')[0];
+                rowData[findHeader('Foydalanuvchi')] = userName;
 
                 return rowData;
             });
