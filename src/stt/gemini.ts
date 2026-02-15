@@ -5,9 +5,21 @@ import { ProductDraft } from '../bot/context';
 
 dotenv.config();
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-// User requested specific ID: gemini-2.5-flash-lite
-const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
+// Parse keys from comma-separated string
+const keys = (process.env.GEMINI_API_KEY || '').split(',').map(k => k.trim()).filter(k => k.length > 0);
+let currentKeyIndex = 0;
+
+const getNextGenAI = () => {
+    if (keys.length === 0) {
+        console.error("No GEMINI_API_KEY provided in .env");
+        // Fallback or throw? For safety, let's allow it to fail gracefully or use empty string (which will error downstream)
+        return new GoogleGenerativeAI('');
+    }
+    const key = keys[currentKeyIndex];
+    // console.log(`Rotating Gemini Key: Using index ${currentKeyIndex} (Total: ${keys.length})`);
+    currentKeyIndex = (currentKeyIndex + 1) % keys.length;
+    return new GoogleGenerativeAI(key);
+};
 
 export const transcribeAndParse = async (audioPath: string): Promise<ProductDraft[]> => {
     const audioData = fs.readFileSync(audioPath);
@@ -53,6 +65,9 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
         { "name": "Kallektor", "category": "Spark", "firma": "Vesmo", "code": "670", "quantity": null, "cost_price": 1.1, "sale_price": 1.7, "currency": "USD" }
     ]
     `;
+
+    const genAI = getNextGenAI();
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 
     const result = await model.generateContent([prompt, audioPart]);
     const response = await result.response;
