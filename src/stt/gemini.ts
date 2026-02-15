@@ -58,6 +58,9 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
        - "dollar", "$", "u.e." -> "USD"
        - "sum", "so'm", "ming" -> "UZS"
        - Default to "UZS" if ambiguous and large number. "USD" if small number (< 1000) or decimal.
+    7. **Spelling Normalization**:
+       - "kollektor", "kallekter", "kollekter" -> **"kallektor"** (Always use this standard spelling).
+       - "zupchatka" -> "Zupchatka" (Capitalize).
     
     Return a valid JSON array of objects.
     Example Output:
