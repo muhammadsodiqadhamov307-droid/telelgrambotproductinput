@@ -61,7 +61,7 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
        - **Action**: You MUST convert "u" or "butun" to a DOT.
        - **Small Floats**: Numbers like 1.1, 0.5, 10.7 are ALMOST ALWAYS PRICES.
     6. **Quantity vs Price**:
-       - **DEFAULT QUANTITY IS NULL**: If the user does NOT say a quantity ("10 ta", "2 shtuk"), do **NOT** assume 1. Return `null`.
+       - **DEFAULT QUANTITY IS NULL**: If the user does NOT say a quantity ("10 ta", "2 shtuk"), do **NOT** assume 1. Return null.
        - **Ambiguity**: "10 ta 5000" -> Qty: 10, Price: 5000.
     7. **Spelling Normalization (MANDATORY)**:
        - **Cars**: "Neksya", "Neksiya" -> **"Nexia"**. "Kobalt" -> **"Cobalt"**. "Lasetti" -> **"Lacetti"**. "Jentra" -> **"Gentra"**.
