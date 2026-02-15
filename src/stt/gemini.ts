@@ -33,7 +33,7 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
 
     **Crucial Parsing Rules:**
     1. **Language**: High proficiency in Uzbek/Russian mixed speech (auto parts context).
-    2. **Category**: Often refers to the Car Model (e.g., "Lacetti", "Damas", "Cobalt"). Map this to `category`.
+    2. **Category**: Often refers to the Car Model (e.g., "Lacetti", "Damas", "Cobalt"). Map this to 'category'.
     3. **Numbers**: 
        - Support DECIMALS. "10.4", "2.7" should be parsed exactly as numbers.
        - "25 ming" -> 25000.
