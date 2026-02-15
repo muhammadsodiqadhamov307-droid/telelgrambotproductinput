@@ -34,22 +34,30 @@ export class GoogleSheetsService {
                 this.initialized = true;
             }
 
-            const sheet = this.doc.sheetsByIndex[0]; // Assume first sheet
+            await sheet.loadHeaderRow(); // Ensure headers are loaded
+            const headerValues = sheet.headerValues;
 
-            // Map product drafts to rows matches the header structure
-            // Headers: Name, Firma, Code, Category, Quantity, Cost, Sale, Currency, Date
+            // Helper to find the actual header key case-insensitively
+            const findHeader = (keyToCheck: string): string => {
+                const found = headerValues.find(h => h.trim().toLowerCase() === keyToCheck.trim().toLowerCase());
+                return found || keyToCheck; // Fallback to provided key if strict match fails (google-spreadsheet might handle it)
+            }
+
+            // Map product drafts to rows using correct headers
             const rows = products.map(p => {
-                return {
-                    'Maxsulot nomi': p.name || 'Nomsiz',
-                    'Firma': p.firma || '',
-                    'Kodi': p.code || '',
-                    'Mashina turi': p.category || '',
-                    'Soni': p.quantity || '',
-                    'Kelish narxi': p.cost_price || '',
-                    'Sotish narxi': p.sale_price || '',
-                    'Valyuta': p.currency || 'USD',
-                    'Sana': new Date().toISOString().split('T')[0]
-                };
+                const rowData: Record<string, string | number> = {};
+
+                rowData[findHeader('Maxsulot nomi')] = p.name || 'Nomsiz';
+                rowData[findHeader('Firma')] = p.firma || '';
+                rowData[findHeader('Kodi')] = p.code || '';
+                rowData[findHeader('Mashina turi')] = p.category || '';
+                rowData[findHeader('Soni')] = p.quantity || '';
+                rowData[findHeader('Kelish narxi')] = p.cost_price || '';
+                rowData[findHeader('Sotish narxi')] = p.sale_price || '';
+                rowData[findHeader('Valyuta')] = p.currency || 'USD';
+                rowData[findHeader('Sana')] = new Date().toISOString().split('T')[0];
+
+                return rowData;
             });
 
             await sheet.addRows(rows);
