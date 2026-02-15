@@ -37,7 +37,7 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
     3. **Numbers**: 
        - Support DECIMALS. "10.4", "2.7" should be parsed exactly as numbers.
        - "25 ming" -> 25000.
-       - **IMPORTANT**: If a number (quantity/price) is NOT mentioned, set it to `null`. Do NOT default to 0.
+       - **IMPORTANT**: If a number (quantity/price) is NOT mentioned, set it to null. Do NOT default to 0.
     4. **Currency**:
        - If price is small (e.g. 1.2, 10.5, 50) and no currency mentioned, it is likely **USD** if consistent with car parts logic, OR check for "dollar" context. But usually small numbers like 1-100 are dollars, large numbers like 10000+ are sums.
        - "dollar", "$", "u.e." -> "USD"
