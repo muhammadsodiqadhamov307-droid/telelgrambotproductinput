@@ -48,7 +48,9 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
     1. **Language**: High proficiency in Uzbek/Russian mixed speech (auto parts context).
     2. **Category**: Often refers to the Car Model (e.g., "Lacetti", "Damas", "Cobalt"). Map this to 'category'.
     3. **Firma**: Extract brand or manufacturer name (e.g., "Povergrip", "Vesmo").
-    4. **Name**: Captures FULL product name. "Zupchatka remen" -> "Zupchatka remen", NOT just "Zupchatka".
+    4. **Name**: Captures **FULL** product name. "Zupchatka remen" -> "Zupchatka remen". "Kallektor prokladka" -> "Kallektor prokladka".
+       - **CRITICAL**: Do NOT split the name. Everything before "Category", "Firma", or a Number is part of the NAME.
+       - Example: "Kallektor prokladka" is ONE name. Do not split it.
     5. **Numbers & Decimals**: 
        - Support spoken decimals like "10 u 3" (10 point 3) or "10 butun 5" -> **10.3**, **10.5**.
        - "on u besh" -> 10.5
