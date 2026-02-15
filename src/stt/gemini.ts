@@ -82,7 +82,24 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
 
     try {
         console.log("Gemini Response:", cleanedText);
-        return JSON.parse(cleanedText) as ProductDraft[];
+        const products = JSON.parse(cleanedText) as ProductDraft[];
+
+        // Post-processing for strict spelling normalization
+        // This functionality is added because the LLM sometimes prefers "correct" dictionary spelling
+        // over the user's preferred "dialect/slang" spelling.
+        return products.map(p => {
+            if (p.name) {
+                // Force "kallektor"
+                p.name = p.name.replace(/kollektor/gi, 'kallektor')
+                    .replace(/kollekter/gi, 'kallektor')
+                    .replace(/kallekter/gi, 'kallektor');
+
+                // Capitalize first letter
+                p.name = p.name.charAt(0).toUpperCase() + p.name.slice(1);
+            }
+            return p;
+        });
+
     } catch (error) {
         console.error("Failed to parse Gemini response:", text);
         throw new Error("Failed to parse product data.");
