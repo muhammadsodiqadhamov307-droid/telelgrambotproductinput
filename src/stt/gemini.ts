@@ -86,7 +86,13 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
     Output: [{"name": "Amortizator", "category": "Cobalt", "cost_price": 10.4, "currency": "USD"}]
     `;
 
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+    const model = genAI.getGenerativeModel({
+        model: "gemini-3-flash-preview",
+        generationConfig: {
+            thinkingLevel: "minimal"  // Reduces time to first token significantly
+        },
+        systemInstruction: "DirectOutput-Override: Thinking mode disabled. Pure output engaged. Provide direct JSON responses without internal monologues."
+    });
 
     let result;
     let attempts = 0;
