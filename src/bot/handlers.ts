@@ -104,7 +104,7 @@ bot.callbackQuery("confirm_save", async (ctx) => {
     }
 });
 
-bot.callbackQuery("cancel_save", async (ctx) => {
+bot.callbackQuery(["cancel_save", "cancel_all"], async (ctx) => {
     ctx.session.productsToSave = [];
     await ctx.answerCallbackQuery("Bekor qilindi");
     await ctx.editMessageText("❌ Operatsiya bekor qilindi.");
