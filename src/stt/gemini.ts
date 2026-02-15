@@ -57,7 +57,10 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
     2. **Identify the Car Model**: Words like "Spark", "Cobalt", "Gentra", "Nexia", "Malibu" are almost ALWAYS the **Category**.
        - **Include Numbers**: If you hear "Malibu bir", "Nexia 2", "Nexia ikki", the number is PART OF THE CAR MODEL. Output: "Malibu 1", "Nexia 2".
        - **NEVER put car models in firma field**: Nexia is a car, NOT a brand.
-    3. **Identify the Brand**: Words like "Gates", "Powergrip", "Vesmo" are the **Firma**.
+    3. **Capture FULL Product Names**:
+       - Include ALL descriptive words: "Nufta rabochiy silindr" -> name: "Nufta rabochiy silindr" (keep "Nufta").
+       - Don't drop prefixes or adjectives that describe the product.
+    4. **Identify the Brand**: Words like "Gates", "Powergrip", "Vesmo" are the **Firma**.
     4. **Separate Name from Price**:
        - "Kallektor prokladka 5 dollar" -> Name: "Kallektor prokladka", Cost: 5.
        - The Name usually stops when you hear a Number, a Car Model, or a Brand.
