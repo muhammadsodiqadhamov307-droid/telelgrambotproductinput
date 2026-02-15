@@ -172,11 +172,46 @@ async function handlePrint(ctx: BotContext) {
     // Show last 10
     const recent = products.slice(0, 10);
 
+    let totalCostUZS = 0;
+    let totalSaleUZS = 0;
+    let totalProfitUZS = 0;
+
+    let totalCostUSD = 0;
+    let totalSaleUSD = 0;
+    let totalProfitUSD = 0;
+
     recent.forEach((p, i) => {
+        const qty = p.quantity || 0;
+        const cost = p.cost_price || 0;
+        const sale = p.sale_price || 0;
+        const currency = p.currency || 'UZS';
+
+        const totalCostItem = qty * cost;
+        const totalSaleItem = qty * sale;
+        const profitItem = totalSaleItem - totalCostItem;
+
+        if (currency === 'USD') {
+            totalCostUSD += totalCostItem;
+            totalSaleUSD += totalSaleItem;
+            totalProfitUSD += profitItem;
+        } else {
+            totalCostUZS += totalCostItem;
+            totalSaleUZS += totalSaleItem;
+            totalProfitUZS += profitItem;
+        }
+
         message += `${i + 1}. <b>${p.name}</b> (${p.category || '-'}, ${p.firma || '-'})\n`;
         message += `   Kod: ${p.code || '-'} | Soni: ${p.quantity || '-'}\n`;
-        message += `   Kelish: ${p.cost_price || '-'} | Sotish: ${p.sale_price || '-'} (${p.currency || 'UZS'})\n\n`;
+        message += `   Kelish: ${cost} (Jami: ${totalCostItem}) | Sotish: ${sale} (${currency})\n\n`;
     });
+
+    message += `<b>Jami (UZS):</b>\n`;
+    message += `Kelish: ${totalCostUZS} | Sotish: ${totalSaleUZS} | Foyda: ${totalProfitUZS}\n\n`;
+
+    if (totalCostUSD > 0 || totalSaleUSD > 0) {
+        message += `<b>Jami (USD):</b>\n`;
+        message += `Kelish: ${totalCostUSD} | Sotish: ${totalSaleUSD} | Foyda: ${totalProfitUSD}\n`;
+    }
 
     await ctx.reply(message, { parse_mode: "HTML" });
 }
