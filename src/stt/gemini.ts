@@ -56,11 +56,12 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
     4. **Separate Name from Price**:
        - "Kallektor prokladka 5 dollar" -> Name: "Kallektor prokladka", Cost: 5.
        - The Name usually stops when you hear a Number, a Car Model, or a Brand.
-    5. **Numbers**:
-       - "10 ta", "50 shtuk" -> Quantity: 10, 50.
-       - "5.5", "10 dollar", "narxi 20" -> Price.
-       - If you see two numbers (e.g., "10 ta 5 dollar"), the Integer "10" is likely Quantity, "5" is Price.
-       - **Spoken Decimals**: "10 u 5" -> 10.5.
+    5. **Numbers & PRECISION (CRITICAL)**:
+       - **Decimals**: Users actally say "1.5" (bir yarim), "10 u 5" (10 point 5), "10 butun 5".
+       - **Action**: You MUST convert these to `1.5`, `10.5`. 
+       - **Ambiguity**: If you hear "10 ta 5000", the Integer "10" is QUANTITY, "5000" is PRICE.
+       - **Price detection**: Look for "dollar", "narxi", "sotish", "kelish".
+       - **Small Floats**: Numbers like `1.1`, `0.5`, `10.7` are ALMOST ALWAYS PRICES (not quantity).
     6. **Spelling Normalization**:
        - Always normalize "kollektor", "kollekter" -> **"kallektor"**.
        - "zupchatka" -> "**Zupchatka**".
@@ -68,14 +69,14 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
     Return a valid JSON array of objects.
 
     **Examples:**
-    Input: "Spark kallektor prokladka 10 ta 5 dollardan"
-    Output: [{"name": "Kallektor prokladka", "category": "Spark", "quantity": 10, "cost_price": 5, "currency": "USD"}]
+    Input: "Spark kallektor prokladka 10 ta 1.5 dollardan"
+    Output: [{"name": "Kallektor prokladka", "category": "Spark", "quantity": 10, "cost_price": 1.5, "currency": "USD"}]
 
-    Input: "Powergrip remen 50 ta"
-    Output: [{"name": "Remen", "firma": "Powergrip", "quantity": 50, "currency": "USD"}]
+    Input: "Powergrip remen 50 ta 10 u 3"
+    Output: [{"name": "Remen", "firma": "Powergrip", "quantity": 50, "cost_price": 10.3, "currency": "USD"}]
 
-    Input: "Kobalt amortizator oldi"
-    Output: [{"name": "Amortizator oldi", "category": "Cobalt", "currency": "USD"}]
+    Input: "Kobalt amortizator oldi narxi 22.5"
+    Output: [{"name": "Amortizator oldi", "category": "Cobalt", "cost_price": 22.5, "currency": "USD"}]
     `;
 
     const genAI = getNextGenAI();
