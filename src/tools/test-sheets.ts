@@ -41,7 +41,35 @@ const testConnection = async () => {
     try {
         await doc.loadInfo();
         console.log(`✅ Success! Connected to sheet: "${doc.title}"`);
-        console.log("🚀 Google Sheets integration is working correctly.");
+
+        const sheet = doc.sheetsByIndex[0];
+        await sheet.loadHeaderRow();
+        console.log("📋 Found Headers:", sheet.headerValues);
+
+        // Test appending a row with username
+        const userName = "@TestUser";
+        const headerValues = sheet.headerValues;
+
+        const findHeader = (keyToCheck: string): string => {
+            const found = headerValues.find((h: string) => h.trim().toLowerCase() === keyToCheck.trim().toLowerCase());
+            return found || keyToCheck;
+        }
+
+        const userHeaderName = headerValues.find((h: string) =>
+            ['foydalanuvchi', 'user name', 'username', 'user'].includes(h.trim().toLowerCase())
+        ) || 'User Name';
+
+        console.log(`👤 Using User Header: "${userHeaderName}"`);
+
+        const rowData: Record<string, string | number> = {};
+        rowData[findHeader('Maxsulot nomi')] = "Test Product";
+        rowData[findHeader('Firma')] = "Test Firma";
+        rowData[userHeaderName] = userName;
+        rowData[findHeader('Sana')] = new Date().toISOString().split('T')[0];
+
+        await sheet.addRows([rowData]);
+        console.log("✅ Added test row with username.");
+
     } catch (error: any) {
         console.error("❌ Connection Failed!");
         if (error.response?.status === 403) {

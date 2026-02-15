@@ -31,46 +31,51 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
     };
 
     const prompt = `
-    You are a data entry assistant for a store in Uzbekistan. 
-    Listen to the audio which contains product information in naturally spoken Uzbek, Russian, or English.
+    You are a smart data entry assistant for an auto parts store in Uzbekistan. 
+    User will speak naturally, often mixing Uzbek, Russian, and English.
     
-    Extract the following fields for each product mentioned:
-    - name (string: "Maxsulot nomi")
-    - category (string: "Mashina turi" / Car Type)
-    - firma (string: "Firma" / Brand / Manufacturer. e.g. "Powergrip", "Gates")
-    - code (string: "Kodi")
-    - quantity (number, integer: "Soni". Return null if not specified)
-    - cost_price (number: "Kelish narxi". Return null if not specified)
-    - sale_price (number: "Sotish narxi". Return null if not specified)
-    - currency (string: "UZS" or "USD")
+    **YOUR GOAL**: extract product details even if the user does NOT say keywords like "Maxsulot nomi" or "Firma". You must INFER which word is what based on context.
 
-    **Crucial Parsing Rules:**
-    1. **Language**: High proficiency in Uzbek/Russian mixed speech (auto parts context).
-    2. **Category**: Often refers to the Car Model (e.g., "Lacetti", "Damas", "Cobalt"). Map this to 'category'.
-    3. **Firma**: Extract brand or manufacturer name (e.g., "Povergrip", "Vesmo").
-    4. **Name**: Captures **FULL** product name. "Zupchatka remen" -> "Zupchatka remen". "Kallektor prokladka" -> "Kallektor prokladka".
-       - **CRITICAL**: Do NOT split the name. Everything before "Category", "Firma", or a Number is part of the NAME.
-       - **EXCEPTION**: If a number represents Price or Quantity, it ends the name.
-       - Example: "Kallektor prokladka 5 dollar" -> Name: "Kallektor prokladka", Cost: 5.
-       - Example: "Kallektor prokladka narxi 5 dollar" -> Name: "Kallektor prokladka", Cost: 5.
-    5. **Numbers & Decimals**: 
-       - Support spoken decimals like "10 u 3" (10 point 3) or "10 butun 5" -> **10.3**, **10.5**.
-       - "on u besh" -> 10.5
-       - "milliy" or "ming" -> multiply by 1000 if context implies price.
-       - **IMPORTANT**: If a number (quantity/price) is NOT mentioned, set it to null. Do NOT default to 0.
-    6. **Currency**:
-       - **ALWAYS** set currency to "USD". Even if they say "sum" or nothing, assume it is Dollar.
-       - The user wants EVERYTHING in Dollars.
-    7. **Spelling Normalization**:
-       - "kollektor", "kallekter", "kollekter" -> **"kallektor"** (Always use this standard spelling).
-       - "zupchatka" -> "Zupchatka" (Capitalize).
-    
+    **Fields to Extract:**
+    - name (string): The core product name (e.g., "Zupchatka remen", "Kallektor prokladka").
+    - category (string): Car Model (e.g., "Spark", "Cobalt", "Lacetti", "Damas", "Nexia").
+    - firma (string): Brand/Manufacturer (e.g., "Powergrip", "Gates", "Vesmo", "GMB", "Valeo").
+        - *Hint*: If a word looks like a brand name, map it here.
+    - code (string): Part Number / Code (e.g., "5499", "670").
+        - *Hint*: Usually a standalone number or alphanumeric code, distinct from quantity/price.
+    - quantity (number): The count/amount (e.g., "10 ta", "100 dona", "50").
+        - *Hint*: Integer numbers are usually quantity.
+    - cost_price (number): "Kelish narxi" / Cost (e.g., "5 dollar", "10.5").
+    - sale_price (number): "Sotish narxi" / Sale Price.
+    - currency (string): "USD" (Always default to "USD").
+
+    **Inference Rules (How to understand the user):**
+    1. **Structure is Flexible**: Users might say "Spark kallektor 10 ta" OR "10 ta kallektor Spark uchun". You must figure it out.
+    2. **Identify the Car Model**: Words like "Spark", "Cobalt", "Gentra", "Nexia" are almost ALWAYS the **Category**.
+    3. **Identify the Brand**: Words like "Gates", "Powergrip", "Vesmo" are the **Firma**.
+    4. **Separate Name from Price**:
+       - "Kallektor prokladka 5 dollar" -> Name: "Kallektor prokladka", Cost: 5.
+       - The Name usually stops when you hear a Number, a Car Model, or a Brand.
+    5. **Numbers**:
+       - "10 ta", "50 shtuk" -> Quantity: 10, 50.
+       - "5.5", "10 dollar", "narxi 20" -> Price.
+       - If you see two numbers (e.g., "10 ta 5 dollar"), the Integer "10" is likely Quantity, "5" is Price.
+       - **Spoken Decimals**: "10 u 5" -> 10.5.
+    6. **Spelling Normalization**:
+       - Always normalize "kollektor", "kollekter" -> **"kallektor"**.
+       - "zupchatka" -> "**Zupchatka**".
+
     Return a valid JSON array of objects.
-    Example Output:
-    [
-        { "name": "Zupchatka remen", "category": "Lacetti", "firma": "Povergrip", "code": "5499", "quantity": 10, "cost_price": 10.3, "sale_price": null, "currency": "USD" },
-        { "name": "Kallektor", "category": "Spark", "firma": "Vesmo", "code": "670", "quantity": null, "cost_price": 1.1, "sale_price": 1.7, "currency": "USD" }
-    ]
+
+    **Examples:**
+    Input: "Spark kallektor prokladka 10 ta 5 dollardan"
+    Output: [{"name": "Kallektor prokladka", "category": "Spark", "quantity": 10, "cost_price": 5, "currency": "USD"}]
+
+    Input: "Powergrip remen 50 ta"
+    Output: [{"name": "Remen", "firma": "Powergrip", "quantity": 50, "currency": "USD"}]
+
+    Input: "Kobalt amortizator oldi"
+    Output: [{"name": "Amortizator oldi", "category": "Cobalt", "currency": "USD"}]
     `;
 
     const genAI = getNextGenAI();
