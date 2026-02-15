@@ -203,8 +203,8 @@ async function handlePrint(ctx: any) {
     const userId = ctx.from.id;
     const products = await ProductRepository.getByUserId(userId);
 
-    if (products.length === 0) {
-        await ctx.reply("No products found.");
+    if (!products || products.length === 0) {
+        await ctx.reply("❌ Products not found. Please try again.");
         return;
     }
 

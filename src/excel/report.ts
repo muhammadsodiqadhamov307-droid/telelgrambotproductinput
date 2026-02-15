@@ -9,14 +9,14 @@ export const generateProductReport = async (products: Product[]): Promise<string
 
     worksheet.columns = [
         { header: '#', key: 'index', width: 5 },
-        { header: 'Sana', key: 'created_at', width: 15 },
-        { header: 'Maxsulot nomi', key: 'name', width: 25 },
-        { header: 'Kodi', key: 'code', width: 10 },
-        { header: 'Mashina turi', key: 'category', width: 15 },
-        { header: 'Soni', key: 'quantity', width: 8 },
-        { header: 'Kelish narxi', key: 'cost_price', width: 12 },
-        { header: 'Sotish narxi', key: 'sale_price', width: 12 },
-        { header: 'Valyuta', key: 'currency', width: 8 },
+        { header: 'Maxsulot nomi', key: 'name', width: 30 },
+        { header: 'kodi', key: 'code', width: 10 },
+        { header: 'mashina turi', key: 'category', width: 15 },
+        { header: 'soni', key: 'quantity', width: 8 },
+        { header: 'kelish narxi', key: 'cost_price', width: 12 },
+        { header: 'sotish narxi', key: 'sale_price', width: 12 },
+        { header: 'valyuta', key: 'currency', width: 8 },
+        // Calculated columns (optional, kept for utility but user didn't ask for them explicitly in image, but likely wants totals)
         { header: 'Jami Kelish', key: 'total_cost', width: 15 },
         { header: 'Jami Sotish', key: 'total_sale', width: 15 },
         { header: 'Foyda', key: 'profit', width: 15 },
@@ -36,8 +36,18 @@ export const generateProductReport = async (products: Product[]): Promise<string
 
     products.forEach((p, index) => {
         const currency = p.currency || 'UZS';
-        const totalCost = (p.quantity || 0) * (p.cost_price || 0);
-        const totalSale = (p.quantity || 0) * (p.sale_price || 0);
+        // Treat 0 quantity as null/empty for calculation if needed, 
+        // but for display we want blank.
+        // If p.quantity is 0 (from DB default) but we want it blank if it was "unknown", 
+        // we might have a data ambiguity. Assuming 0 means 0 or unknown. 
+        // User said "if I don't tell ... it should stay blank". 
+
+        const qty = p.quantity || 0;
+        const cost = p.cost_price || 0;
+        const sale = p.sale_price || 0;
+
+        const totalCost = qty * cost;
+        const totalSale = qty * sale;
         const profit = totalSale - totalCost;
 
         if (currency === 'USD') {
@@ -52,17 +62,16 @@ export const generateProductReport = async (products: Product[]): Promise<string
 
         worksheet.addRow({
             index: index + 1,
-            created_at: p.created_at ? new Date(p.created_at).toLocaleDateString() : '',
             name: p.name,
-            category: p.category,
             code: p.code,
-            quantity: p.quantity,
-            currency: currency,
-            cost_price: p.cost_price,
+            category: p.category,
+            quantity: p.quantity === 0 ? null : p.quantity, // Display blank if 0
+            cost_price: p.cost_price, // ExcelJS handles null as blank
             sale_price: p.sale_price,
-            total_cost: totalCost,
-            total_sale: totalSale,
-            profit: profit
+            currency: currency,
+            total_cost: totalCost === 0 ? null : totalCost,
+            total_sale: totalSale === 0 ? null : totalSale,
+            profit: profit === 0 ? null : profit
         });
     });
 

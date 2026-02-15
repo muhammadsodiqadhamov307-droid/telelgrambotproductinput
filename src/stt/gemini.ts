@@ -26,9 +26,9 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
     - name (string: "Maxsulot nomi")
     - category (string: "Mashina turi" / Car Type)
     - code (string: "Kodi")
-    - quantity (number, integer: "Soni")
-    - cost_price (number: "Kelish narxi")
-    - sale_price (number: "Sotish narxi")
+    - quantity (number, integer: "Soni". Return null if not specified)
+    - cost_price (number: "Kelish narxi". Return null if not specified)
+    - sale_price (number: "Sotish narxi". Return null if not specified)
     - currency (string: "UZS" or "USD")
 
     **Crucial Parsing Rules:**
@@ -37,6 +37,7 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
     3. **Numbers**: 
        - Support DECIMALS. "10.4", "2.7" should be parsed exactly as numbers.
        - "25 ming" -> 25000.
+       - **IMPORTANT**: If a number (quantity/price) is NOT mentioned, set it to `null`. Do NOT default to 0.
     4. **Currency**:
        - If price is small (e.g. 1.2, 10.5, 50) and no currency mentioned, it is likely **USD** if consistent with car parts logic, OR check for "dollar" context. But usually small numbers like 1-100 are dollars, large numbers like 10000+ are sums.
        - "dollar", "$", "u.e." -> "USD"
@@ -46,8 +47,8 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
     Return a valid JSON array of objects.
     Example Output:
     [
-        { "name": "Zupchatka", "category": "Lacetti", "code": "5499", "quantity": 10, "cost_price": 10.4, "sale_price": 13, "currency": "USD" },
-        { "name": "Kallektor", "category": "Spark", "code": "670", "quantity": 5, "cost_price": 1.1, "sale_price": 1.7, "currency": "USD" }
+        { "name": "Zupchatka", "category": "Lacetti", "code": "5499", "quantity": 10, "cost_price": 10.4, "sale_price": null, "currency": "USD" },
+        { "name": "Kallektor", "category": "Spark", "code": "670", "quantity": null, "cost_price": 1.1, "sale_price": 1.7, "currency": "USD" }
     ]
     `;
 
