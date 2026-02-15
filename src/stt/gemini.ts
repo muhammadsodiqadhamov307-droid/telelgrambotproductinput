@@ -28,20 +28,22 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
     - quantity (number, integer)
     - cost_price (number)
     - sale_price (number)
+    - currency (string: "UZS" or "USD")
 
     **Crucial Parsing Rules:**
     1. **Language**: High proficiency in Uzbek is required. Handle dialects/mixed speech.
     2. **Numbers**: Parse "25 ming" as 25000, "2.5 million" as 2500000.
     3. **Currency**:
-       - If price is in **So'm** (e.g., "ming", "so'm"), keep as is (e.g. 25000).
-       - If price is in **Dollars** (e.g., "dollar", "$", "u.e."), **CONVERT to So'm** assuming rate 1 USD = 12800 UZS. 
-         (Example: "10 dollar" -> 128000).
-       - If ambiguous, default to So'm.
+       - If price is in **So'm** (e.g., "ming", "so'm", "sum"), set currency to "UZS".
+       - If price is in **Dollars** (e.g., "dollar", "$", "u.e."), set currency to "USD".
+       - DO NOT CONVERT CURRENCIES. Keep the original number and set the currency field.
+       - If ambiguous, default to "UZS".
     
     Return a valid JSON array of objects.
     Example Output:
     [
-        { "name": "Bodyfix", "category": "Yelim", "code": "BF10", "quantity": 12, "cost_price": 25000, "sale_price": 32000 }
+        { "name": "Bodyfix", "category": "Yelim", "code": "BF10", "quantity": 12, "cost_price": 25000, "sale_price": 32000, "currency": "UZS" },
+        { "name": "iPhone", "category": "Phone", "code": "IP15", "quantity": 1, "cost_price": 800, "sale_price": 950, "currency": "USD" }
     ]
     `;
 

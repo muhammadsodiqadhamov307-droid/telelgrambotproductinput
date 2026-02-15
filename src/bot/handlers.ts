@@ -45,8 +45,8 @@ bot.on('message:voice', async (ctx) => {
             message += `Category: ${p.category || '?'}\n`;
             message += `Code: ${p.code || '?'}\n`;
             message += `Qty: ${p.quantity || '?'}\n`;
-            message += `Cost: ${p.cost_price || '?'}\n`;
-            message += `Sale: ${p.sale_price || '?'}\n\n`;
+            message += `Cost: ${p.cost_price || '?'} ${p.currency || 'UZS'}\n`;
+            message += `Sale: ${p.sale_price || '?'} ${p.currency || 'UZS'}\n\n`;
         });
 
         // Inline Keyboard
@@ -86,7 +86,8 @@ bot.callbackQuery("save_all", async (ctx) => {
                 code: p.code,
                 quantity: p.quantity || 0,
                 cost_price: p.cost_price,
-                sale_price: p.sale_price
+                sale_price: p.sale_price,
+                currency: p.currency || 'UZS'
             });
         }
 

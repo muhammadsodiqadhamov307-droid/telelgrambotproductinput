@@ -7,6 +7,7 @@ export interface ProductDraft {
     quantity?: number;
     cost_price?: number;
     sale_price?: number;
+    currency?: 'UZS' | 'USD';
 }
 
 export interface SessionData {

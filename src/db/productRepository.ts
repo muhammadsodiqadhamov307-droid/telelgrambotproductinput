@@ -9,6 +9,7 @@ export interface Product {
     quantity: number;
     cost_price?: number;
     sale_price?: number;
+    currency?: string;
     created_at?: string;
 }
 
@@ -16,8 +17,8 @@ export class ProductRepository {
     static async create(product: Product): Promise<number> {
         const db = await getDB();
         const result = await db.run(
-            `INSERT INTO products (user_id, name, category, code, quantity, cost_price, sale_price)
-             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            `INSERT INTO products (user_id, name, category, code, quantity, cost_price, sale_price, currency)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 product.user_id,
                 product.name,
@@ -25,7 +26,8 @@ export class ProductRepository {
                 product.code,
                 product.quantity,
                 product.cost_price,
-                product.sale_price
+                product.sale_price,
+                product.currency || 'UZS'
             ]
         );
         return result.lastID!;
