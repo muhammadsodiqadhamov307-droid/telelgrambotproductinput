@@ -332,9 +332,10 @@ bot.callbackQuery(/^edit_prod_(\d+)$/, async (ctx) => {
 
     // Show field selection menu
     const keyboard = new InlineKeyboard()
-        .text("Nomi", `edit_field_name_${id}`).text("Firma", `edit_field_firma_${id}`).row()
-        .text("Kodi", `edit_field_code_${id}`).text("Soni", `edit_field_quantity_${id}`).row()
-        .text("Kelish", `edit_field_cost_price_${id}`).text("Sotish", `edit_field_sale_price_${id}`);
+        .text("Nomi", `edit_field_name_${id}`).text("Mashina", `edit_field_category_${id}`).row()
+        .text("Firma", `edit_field_firma_${id}`).text("Kodi", `edit_field_code_${id}`).row()
+        .text("Soni", `edit_field_quantity_${id}`).text("Kelish", `edit_field_cost_price_${id}`).row()
+        .text("Sotish", `edit_field_sale_price_${id}`);
 
     await ctx.editMessageReplyMarkup({ reply_markup: keyboard });
     await ctx.answerCallbackQuery("Tahrirlash uchun maydonni tanlang");
@@ -351,6 +352,7 @@ bot.callbackQuery(/^edit_field_(\w+)_(\d+)$/, async (ctx) => {
 
     const fieldMap: any = {
         name: "Maxsulot nomi",
+        category: "Mashina turi",
         firma: "Firma",
         code: "Kodi",
         quantity: "Soni",
