@@ -58,10 +58,10 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
        - The Name usually stops when you hear a Number, a Car Model, or a Brand.
     5. **Numbers & PRECISION (CRITICAL)**:
        - **Decimals**: Users actally say "1.5" (bir yarim), "10 u 5" (10 point 5), "10 butun 5".
-       - **Action**: You MUST convert these to `1.5`, `10.5`. 
+       - **Action**: You MUST convert these to 1.5, 10.5. 
        - **Ambiguity**: If you hear "10 ta 5000", the Integer "10" is QUANTITY, "5000" is PRICE.
        - **Price detection**: Look for "dollar", "narxi", "sotish", "kelish".
-       - **Small Floats**: Numbers like `1.1`, `0.5`, `10.7` are ALMOST ALWAYS PRICES (not quantity).
+       - **Small Floats**: Numbers like 1.1, 0.5, 10.7 are ALMOST ALWAYS PRICES (not quantity).
     6. **Spelling Normalization**:
        - Always normalize "kollektor", "kollekter" -> **"kallektor"**.
        - "zupchatka" -> "**Zupchatka**".
