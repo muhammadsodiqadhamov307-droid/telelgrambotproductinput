@@ -6,7 +6,7 @@ import { ProductDraft } from '../bot/context';
 dotenv.config();
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite-preview-02-05" });
 
 export const transcribeAndParse = async (audioPath: string): Promise<ProductDraft[]> => {
     const audioData = fs.readFileSync(audioPath);
@@ -18,7 +18,9 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
     };
 
     const prompt = `
-    You are a data entry assistant. Listen to the audio which contains product information.
+    You are a data entry assistant for a store in Uzbekistan. 
+    Listen to the audio which contains product information in naturally spoken Uzbek, Russian, or English.
+    
     Extract the following fields for each product mentioned:
     - name (string)
     - category (string)
@@ -27,14 +29,19 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
     - cost_price (number)
     - sale_price (number)
 
-    The audio might be in Uzbek, Russian, or English.
-    Prices might be spoken like "25 ming" (25000), "2.5 million" (2500000). Convert them to standard numbers.
-    Return a valid JSON array of objects. Do not wrap in markdown code blocks. Just the raw JSON.
-    If a field is missing, omit it or set to null.
+    **Crucial Parsing Rules:**
+    1. **Language**: High proficiency in Uzbek is required. Handle dialects/mixed speech.
+    2. **Numbers**: Parse "25 ming" as 25000, "2.5 million" as 2500000.
+    3. **Currency**:
+       - If price is in **So'm** (e.g., "ming", "so'm"), keep as is (e.g. 25000).
+       - If price is in **Dollars** (e.g., "dollar", "$", "u.e."), **CONVERT to So'm** assuming rate 1 USD = 12800 UZS. 
+         (Example: "10 dollar" -> 128000).
+       - If ambiguous, default to So'm.
     
+    Return a valid JSON array of objects.
     Example Output:
     [
-        { "name": "Bodyfix", "category": "Adhesive", "code": "BF10", "quantity": 12, "cost_price": 25000, "sale_price": 32000 }
+        { "name": "Bodyfix", "category": "Yelim", "code": "BF10", "quantity": 12, "cost_price": 25000, "sale_price": 32000 }
     ]
     `;
 
