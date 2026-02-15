@@ -5,21 +5,15 @@ import { ProductDraft } from '../bot/context';
 
 dotenv.config();
 
-// Parse keys from comma-separated string
-const keys = (process.env.GEMINI_API_KEY || '').split(',').map(k => k.trim()).filter(k => k.length > 0);
-let currentKeyIndex = 0;
 
-const getNextGenAI = () => {
-    if (keys.length === 0) {
-        console.error("No GEMINI_API_KEY provided in .env");
-        // Fallback or throw? For safety, let's allow it to fail gracefully or use empty string (which will error downstream)
-        return new GoogleGenerativeAI('');
-    }
-    const key = keys[currentKeyIndex];
-    // console.log(`Rotating Gemini Key: Using index ${currentKeyIndex} (Total: ${keys.length})`);
-    currentKeyIndex = (currentKeyIndex + 1) % keys.length;
-    return new GoogleGenerativeAI(key);
-};
+// Use single API key (user has upgraded to paid tier)
+const apiKey = process.env.GEMINI_API_KEY || '';
+
+if (!apiKey) {
+    console.error("No GEMINI_API_KEY provided in .env");
+}
+
+const genAI = new GoogleGenerativeAI(apiKey);
 
 export const transcribeAndParse = async (audioPath: string): Promise<ProductDraft[]> => {
     const audioData = fs.readFileSync(audioPath);
@@ -91,7 +85,6 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
     Output: [{"name": "Amortizator", "category": "Cobalt", "cost_price": 10.4, "currency": "USD"}]
     `;
 
-    const genAI = getNextGenAI();
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 
     let result;
