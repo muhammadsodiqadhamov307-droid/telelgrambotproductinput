@@ -57,7 +57,13 @@ export class GoogleSheetsService {
                 rowData[findHeader('Sotish narxi')] = p.sale_price || '';
                 rowData[findHeader('Valyuta')] = p.currency || 'USD';
                 rowData[findHeader('Sana')] = new Date().toISOString().split('T')[0];
-                rowData[findHeader('Foydalanuvchi')] = userName;
+
+                // Find header for User Name (support aliases)
+                const userHeaderName = headerValues.find(h =>
+                    ['foydalanuvchi', 'user name', 'username', 'user'].includes(h.trim().toLowerCase())
+                ) || 'User Name';
+
+                rowData[userHeaderName] = userName;
 
                 return rowData;
             });
