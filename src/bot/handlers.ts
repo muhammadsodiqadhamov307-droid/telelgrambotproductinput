@@ -310,3 +310,56 @@ bot.on("message:text", async (ctx, next) => {
     }
     await next();
 });
+
+// Delete Handler
+bot.callbackQuery(/^del_prod_(\d+)$/, async (ctx) => {
+    const id = parseInt(ctx.match[1]);
+    try {
+        await ProductRepository.delete(id);
+        await ctx.answerCallbackQuery("O'chirildi");
+        await ctx.editMessageText("🗑 Mahsulot o'chirildi.");
+    } catch (e) {
+        console.error(e);
+        await ctx.answerCallbackQuery("Xatolik");
+    }
+});
+
+// Edit Init Handler
+bot.callbackQuery(/^edit_prod_(\d+)$/, async (ctx) => {
+    const id = parseInt(ctx.match[1]);
+    ctx.session.editingProductId = id;
+    ctx.session.step = 'editing'; // We'll set step but wait for field selection
+
+    // Show field selection menu
+    const keyboard = new InlineKeyboard()
+        .text("Nomi", `edit_field_name_${id}`).text("Firma", `edit_field_firma_${id}`).row()
+        .text("Kodi", `edit_field_code_${id}`).text("Soni", `edit_field_quantity_${id}`).row()
+        .text("Kelish", `edit_field_cost_price_${id}`).text("Sotish", `edit_field_sale_price_${id}`);
+
+    await ctx.editMessageReplyMarkup({ reply_markup: keyboard });
+    await ctx.answerCallbackQuery("Tahrirlash uchun maydonni tanlang");
+});
+
+// Edit Field Handler
+bot.callbackQuery(/^edit_field_(\w+)_(\d+)$/, async (ctx) => {
+    const field = ctx.match[1];
+    const id = parseInt(ctx.match[2]);
+
+    ctx.session.editingProductId = id;
+    ctx.session.editingField = field;
+    ctx.session.step = 'editing';
+
+    const fieldMap: any = {
+        name: "Maxsulot nomi",
+        firma: "Firma",
+        code: "Kodi",
+        quantity: "Soni",
+        cost_price: "Kelish narxi",
+        sale_price: "Sotish narxi"
+    };
+
+    const label = fieldMap[field] || field;
+
+    await ctx.reply(`✍️ <b>${label}</b> uchun yangi qiymatni yozing:`, { parse_mode: "HTML" });
+    await ctx.answerCallbackQuery();
+});
