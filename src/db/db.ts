@@ -24,6 +24,7 @@ export const initDB = async (): Promise<Database> => {
             user_id INTEGER NOT NULL,
             name TEXT NOT NULL,
             category TEXT,
+            firma TEXT,
             code TEXT,
             quantity INTEGER NOT NULL DEFAULT 0,
             cost_price REAL,
@@ -36,9 +37,11 @@ export const initDB = async (): Promise<Database> => {
     // Migration for existing databases
     try {
         await db.exec(`ALTER TABLE products ADD COLUMN currency TEXT DEFAULT 'UZS';`);
-    } catch (e) {
-        // Ignore error if column already exists
-    }
+    } catch (e) { }
+
+    try {
+        await db.exec(`ALTER TABLE products ADD COLUMN firma TEXT;`);
+    } catch (e) { }
 
     // Index for faster search
     await db.exec(`CREATE INDEX IF NOT EXISTS idx_products_user_id ON products(user_id);`);

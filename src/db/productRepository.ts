@@ -5,6 +5,7 @@ export interface Product {
     user_id: number;
     name: string;
     category?: string;
+    firma?: string;
     code?: string;
     quantity: number;
     cost_price?: number;
@@ -17,12 +18,13 @@ export class ProductRepository {
     static async create(product: Product): Promise<number> {
         const db = await getDB();
         const result = await db.run(
-            `INSERT INTO products (user_id, name, category, code, quantity, cost_price, sale_price, currency)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            `INSERT INTO products (user_id, name, category, firma, code, quantity, cost_price, sale_price, currency)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 product.user_id,
                 product.name,
                 product.category,
+                product.firma,
                 product.code,
                 product.quantity,
                 product.cost_price,

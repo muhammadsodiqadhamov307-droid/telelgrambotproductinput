@@ -25,6 +25,7 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
     Extract the following fields for each product mentioned:
     - name (string: "Maxsulot nomi")
     - category (string: "Mashina turi" / Car Type)
+    - firma (string: "Firma" / Brand / Manufacturer. e.g. "Powergrip", "Gates")
     - code (string: "Kodi")
     - quantity (number, integer: "Soni". Return null if not specified)
     - cost_price (number: "Kelish narxi". Return null if not specified)
@@ -34,11 +35,12 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
     **Crucial Parsing Rules:**
     1. **Language**: High proficiency in Uzbek/Russian mixed speech (auto parts context).
     2. **Category**: Often refers to the Car Model (e.g., "Lacetti", "Damas", "Cobalt"). Map this to 'category'.
-    3. **Numbers**: 
+    3. **Firma**: Extract brand or manufacturer name (e.g., "Povergrip", "Vesmo").
+    4. **Numbers**: 
        - Support DECIMALS. "10.4", "2.7" should be parsed exactly as numbers.
        - "25 ming" -> 25000.
        - **IMPORTANT**: If a number (quantity/price) is NOT mentioned, set it to null. Do NOT default to 0.
-    4. **Currency**:
+    5. **Currency**:
        - If price is small (e.g. 1.2, 10.5, 50) and no currency mentioned, it is likely **USD** if consistent with car parts logic, OR check for "dollar" context. But usually small numbers like 1-100 are dollars, large numbers like 10000+ are sums.
        - "dollar", "$", "u.e." -> "USD"
        - "sum", "so'm", "ming" -> "UZS"
@@ -47,8 +49,8 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
     Return a valid JSON array of objects.
     Example Output:
     [
-        { "name": "Zupchatka", "category": "Lacetti", "code": "5499", "quantity": 10, "cost_price": 10.4, "sale_price": null, "currency": "USD" },
-        { "name": "Kallektor", "category": "Spark", "code": "670", "quantity": null, "cost_price": 1.1, "sale_price": 1.7, "currency": "USD" }
+        { "name": "Zupchatka", "category": "Lacetti", "firma": "Povergrip", "code": "5499", "quantity": 10, "cost_price": 10.4, "sale_price": null, "currency": "USD" },
+        { "name": "Kallektor", "category": "Spark", "firma": "Vesmo", "code": "670", "quantity": null, "cost_price": 1.1, "sale_price": 1.7, "currency": "USD" }
     ]
     `;
 

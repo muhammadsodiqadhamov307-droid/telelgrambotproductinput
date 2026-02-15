@@ -3,6 +3,7 @@ import { Context, SessionFlavor } from 'grammy';
 export interface ProductDraft {
     name?: string;
     category?: string;
+    firma?: string;
     code?: string;
     quantity?: number;
     cost_price?: number;

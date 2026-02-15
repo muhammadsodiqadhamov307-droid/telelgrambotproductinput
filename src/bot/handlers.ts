@@ -6,73 +6,76 @@ import fs from 'fs';
 import { ProductRepository } from '../db/productRepository';
 import { generateProductReport } from '../excel/report';
 import { InlineKeyboard, InputFile } from 'grammy';
+import { BotContext } from './context';
 
 bot.on('message:voice', async (ctx) => {
     const voice = ctx.message.voice;
     const file = await ctx.getFile();
     const filePath = file.file_path;
+    const fileId = voice.file_id;
 
-    // Get file URL
+    // Manual file URL construction as fallback/standard
     const fileUrl = `https://api.telegram.org/file/bot${process.env.BOT_TOKEN}/${filePath}`;
 
-    const tempDir = path.join(__dirname, '../../temp');
-    if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
-
-    const oggPath = path.join(tempDir, `${voice.file_id}.ogg`);
-    const mp3Path = path.join(tempDir, `${voice.file_id}.mp3`);
-
-    await ctx.reply("Processing voice message... ⏳");
+    await ctx.reply("🔊 Ovozli xabar qabul qilindi. Tahlil qilinmoqda... ⏳");
 
     try {
+        const tempDir = path.join(__dirname, '../../temp');
+        if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
+
+        const oggPath = path.join(tempDir, `${fileId}.ogg`);
+        const mp3Path = path.join(tempDir, `${fileId}.mp3`);
+
         await downloadFile(fileUrl, oggPath);
         await convertOggToMp3(oggPath, mp3Path);
 
         const products = await transcribeAndParse(mp3Path);
 
-        if (products.length === 0) {
-            await ctx.reply("Could not extract any products. Please try again.");
+        // Clean up files
+        fs.unlinkSync(oggPath);
+        fs.unlinkSync(mp3Path);
+
+        if (!products || products.length === 0) {
+            await ctx.reply("⚠️ Mahsulot ma'lumotlarini aniqlab bo'lmadi. Qaytadan urinib ko'ring yoki aniqroq gapiring.");
             return;
         }
 
         // Save to session for confirmation
         ctx.session.productsToSave = products;
 
-        // Construct message
-        let message = "✅ Parsed Products:\n\n";
-        products.forEach((p, i) => {
-            message += `*Product ${i + 1}*\n`;
-            message += `Name: ${p.name || '?'}\n`;
-            message += `Category: ${p.category || '?'}\n`;
-            message += `Code: ${p.code || '?'}\n`;
-            message += `Qty: ${p.quantity || '?'}\n`;
-            message += `Cost: ${p.cost_price || '?'} ${p.currency || 'UZS'}\n`;
-            message += `Sale: ${p.sale_price || '?'} ${p.currency || 'UZS'}\n\n`;
+        const validProducts = ctx.session.productsToSave;
+        let message = `📝 <b>Tasdiqlash</b> (${validProducts.length} ta mahsulot):\n\n`;
+
+        validProducts.forEach((p, i) => {
+            message += `<b>${i + 1}. ${p.name || 'Nomsiz'}</b>\n`;
+            message += `Mashina: ${p.category || '-'}\n`;
+            message += `Firma: ${p.firma || '-'}\n`;
+            message += `Kod: ${p.code || '-'}\n`;
+            message += `Soni: ${p.quantity || '-'}\n`;
+            message += `Kelish: ${p.cost_price || '-'} ${p.currency || 'UZS'}\n`;
+            message += `Sotish: ${p.sale_price || '-'} ${p.currency || 'UZS'}\n\n`;
         });
 
         // Inline Keyboard
         const keyboard = new InlineKeyboard()
-            .text("✅ Save All", "save_all")
-            .text("❌ Cancel", "cancel_all");
+            .text("✅ Saqlash", "confirm_save")
+            .text("❌ Bekor qilish", "cancel_save");
 
         await ctx.reply(message, {
-            parse_mode: "Markdown",
-            reply_markup: keyboard
+            reply_markup: keyboard,
+            parse_mode: "HTML"
         });
-
-        // Clean up
-        fs.unlinkSync(oggPath);
-        fs.unlinkSync(mp3Path);
 
     } catch (error) {
         console.error("Error processing voice:", error);
-        await ctx.reply("Error processing voice message.");
+        await ctx.reply("❌ Xatolik yuz berdi. Iltimos qaytadan urinib ko'ring.");
     }
 });
 
-bot.callbackQuery("save_all", async (ctx) => {
+bot.callbackQuery("confirm_save", async (ctx) => {
     if (!ctx.session.productsToSave || ctx.session.productsToSave.length === 0) {
-        await ctx.answerCallbackQuery("No products to save.");
-        await ctx.editMessageText("Session expired or empty.");
+        await ctx.answerCallbackQuery("Saqlash uchun mahsulot yo'q.");
+        await ctx.editMessageText("⏳ Sessiya muddati tugagan yoki bo'sh.");
         return;
     }
 
@@ -81,8 +84,9 @@ bot.callbackQuery("save_all", async (ctx) => {
         for (const p of ctx.session.productsToSave) {
             await ProductRepository.create({
                 user_id: userId,
-                name: p.name || 'Unknown',
+                name: p.name || 'Nomsiz',
                 category: p.category,
+                firma: p.firma,
                 code: p.code,
                 quantity: p.quantity || 0,
                 cost_price: p.cost_price,
@@ -91,163 +95,112 @@ bot.callbackQuery("save_all", async (ctx) => {
             });
         }
 
-        await ctx.answerCallbackQuery("Saved successfully!");
-        await ctx.editMessageText(`Saved ${ctx.session.productsToSave.length} products! ✅`);
+        await ctx.answerCallbackQuery("Muvaffaqiyatli saqlandi!");
+        await ctx.editMessageText(`✅ ${ctx.session.productsToSave.length} ta mahsulot saqlandi!`);
         ctx.session.productsToSave = [];
     } catch (e) {
         console.error(e);
-        await ctx.answerCallbackQuery("Error saving.");
+        await ctx.answerCallbackQuery("Saqlashda xatolik.");
     }
 });
 
-bot.callbackQuery("cancel_all", async (ctx) => {
+bot.callbackQuery("cancel_save", async (ctx) => {
     ctx.session.productsToSave = [];
-    await ctx.answerCallbackQuery("Cancelled");
-    await ctx.editMessageText("Operation cancelled. ❌");
+    await ctx.answerCallbackQuery("Bekor qilindi");
+    await ctx.editMessageText("❌ Operatsiya bekor qilindi.");
 });
 
 bot.command('report', async (ctx) => {
-    if (!ctx.from) return;
-    const userId = ctx.from.id;
-    await ctx.reply("Generating report... ⏳");
-
-    try {
-        const products = await ProductRepository.getByUserId(userId);
-        if (products.length === 0) {
-            await ctx.reply("No products found.");
-            return;
-        }
-
-        const filePath = await generateProductReport(products);
-        await ctx.replyWithDocument(new InputFile(filePath));
-
-        // Clean up
-        // fs.unlinkSync(filePath); // Optional: keep for cache or delete
-    } catch (e) {
-        console.error(e);
-        await ctx.reply("Failed to generate report.");
-    }
+    await handleReport(ctx as any);
 });
 
-// Print View Command
 bot.command('print', async (ctx) => {
+    await handlePrint(ctx as any);
+});
+
+// --- Menu Handlers ---
+
+bot.hears("📄 Excel Hisobot", async (ctx) => {
+    await handleReport(ctx);
+});
+
+bot.hears("🖨 Ko'rish", async (ctx) => {
+    await handlePrint(ctx);
+});
+
+bot.hears("➕ Mahsulot qo'shish (Ovozli)", async (ctx) => {
+    await ctx.reply("🎤 Iltimos, mahsulotlar haqida ovozli xabar yuboring.");
+});
+
+bot.hears("🗑 Oxirgisini o'chirish", async (ctx) => {
+    await handleDeleteLast(ctx);
+});
+
+bot.hears("🔍 Qidirish", async (ctx) => {
+    ctx.session.step = 'searching';
+    await ctx.reply("🔍 Qidirayotgan mahsulot nomini yoki kodini yozing:");
+});
+
+
+async function handleReport(ctx: BotContext) {
     if (!ctx.from) return;
     const userId = ctx.from.id;
     const products = await ProductRepository.getByUserId(userId);
 
     if (products.length === 0) {
-        await ctx.reply("No products found.");
+        await ctx.reply("❌ Hozircha mahsulot yo'q.");
         return;
     }
 
-    let message = "📦 *Product List*\n\n";
-    let totalProfit = 0;
+    await ctx.reply("⏳ Excel fayl tayyorlanmoqda...");
+    const filePath = await generateProductReport(products);
 
-    products.forEach(p => {
-        const profit = ((p.sale_price || 0) - (p.cost_price || 0)) * (p.quantity || 0);
-        totalProfit += profit;
-        message += `${p.code || '-'} — ${p.name} — ${p.quantity} qty — ${p.sale_price}\n`;
-    });
-
-    message += `\n*Total Profit*: ${totalProfit}`;
-
-    // Telegram message length limit is 4096 chars. 
-    // If too long, we might need to split. For now, assuming it fits or user filters.
-    if (message.length > 4000) {
-        message = message.substring(0, 4000) + "... (truncated)";
-    }
-
-    await ctx.reply(message, { parse_mode: "Markdown" });
-});
-
-bot.hears("📄 Report Excel", async (ctx) => {
-    // Re-use logic for report
-    // We can't easily call the command handler directly without refactoring, so we can redirect or copy logic.
-    // Ideally we extract the logic to a controller function.
-    // For now, let's just trigger the report logic manually or refactor.
-    // Let's refactor handlers slightly or just copy paste for speed as requested "Build it now".
-    // Better: Helper function.
-    await handleReport(ctx);
-});
-
-bot.hears("🖨 Print View", async (ctx) => {
-    await handlePrint(ctx);
-});
-
-bot.hears("➕ Add Product (Voice)", async (ctx) => {
-    await ctx.reply("Please record a voice message describing the product.");
-});
-
-async function handleReport(ctx: any) {
-    if (!ctx.from) return;
-    const userId = ctx.from.id;
-    await ctx.reply("Generating report... ⏳");
-
-    try {
-        const products = await ProductRepository.getByUserId(userId);
-        if (products.length === 0) {
-            await ctx.reply("No products found.");
-            return;
-        }
-
-        const filePath = await generateProductReport(products);
-        await ctx.replyWithDocument(new InputFile(filePath));
-    } catch (e) {
-        console.error(e);
-        await ctx.reply("Failed to generate report.");
-    }
+    await ctx.replyWithDocument(new InputFile(filePath));
 }
 
-async function handlePrint(ctx: any) {
+async function handlePrint(ctx: BotContext) {
     if (!ctx.from) return;
     const userId = ctx.from.id;
     const products = await ProductRepository.getByUserId(userId);
 
-    if (!products || products.length === 0) {
-        await ctx.reply("❌ Products not found. Please try again.");
+    if (products.length === 0) {
+        await ctx.reply("❌ Hozircha mahsulot yo'q.");
         return;
     }
 
-    let message = "📦 *Product List*\n\n";
-    let totalProfit = 0;
+    let message = "📋 <b>Oxirgi mahsulotlar:</b>\n\n";
+    // Show last 10
+    const recent = products.slice(0, 10);
 
-    products.forEach(p => {
-        const profit = ((p.sale_price || 0) - (p.cost_price || 0)) * (p.quantity || 0);
-        totalProfit += profit;
-        message += `${p.code || '-'} — ${p.name} — ${p.quantity} qty — ${p.sale_price}\n`;
+    recent.forEach((p, i) => {
+        message += `${i + 1}. <b>${p.name}</b> (${p.category || '-'}, ${p.firma || '-'})\n`;
+        message += `   Kod: ${p.code || '-'} | Soni: ${p.quantity || '-'}\n`;
+        message += `   Kelish: ${p.cost_price || '-'} | Sotish: ${p.sale_price || '-'} (${p.currency || 'UZS'})\n\n`;
     });
 
-    message += `\n*Total Profit*: ${totalProfit}`;
-
-    if (message.length > 4000) {
-        message = message.substring(0, 4000) + "... (truncated)";
-    }
-
-    await ctx.reply(message, { parse_mode: "Markdown" });
+    await ctx.reply(message, { parse_mode: "HTML" });
 }
 
-bot.hears("🗑 Delete Last", async (ctx) => {
+async function handleDeleteLast(ctx: BotContext) {
     if (!ctx.from) return;
     const userId = ctx.from.id;
     try {
         const lastProduct = await ProductRepository.getLastProduct(userId);
+
         if (!lastProduct || !lastProduct.id) {
-            await ctx.reply("No recent products found.");
+            await ctx.reply("❌ O'chirish uchun mahsulot yo'q.");
             return;
         }
+
         await ProductRepository.delete(lastProduct.id);
-        await ctx.reply(`Deleted: ${lastProduct.name} (${lastProduct.code || '-'}) 🗑`);
+        await ctx.reply(`✅ Oxirgi mahsulot o'chirildi: <b>${lastProduct.name}</b>`, { parse_mode: "HTML" });
     } catch (e) {
         console.error(e);
-        await ctx.reply("Failed to delete.");
+        await ctx.reply("❌ O'chirishda xatolik.");
     }
-});
+}
 
-bot.hears("🔍 Search", async (ctx) => {
-    ctx.session.step = 'searching';
-    await ctx.reply("Enter product name or code to search:");
-});
-
+// Search Logic
 bot.on("message:text", async (ctx, next) => {
     if (ctx.session.step === 'searching') {
         const query = ctx.message.text;
@@ -257,17 +210,21 @@ bot.on("message:text", async (ctx, next) => {
         try {
             const results = await ProductRepository.search(userId, query);
             if (results.length === 0) {
-                await ctx.reply("No products found.");
+                await ctx.reply("❌ Hech narsa topilmadi.");
             } else {
-                let message = `Found ${results.length} products:\n\n`;
+                let message = `🔍 <b>Topilgan mahsulotlar</b> (${results.length} ta):\n\n`;
                 results.forEach(p => {
-                    message += `${p.name} (${p.code || '-'}) - ${p.quantity} qty - ${p.sale_price}\n`;
+                    message += `<b>${p.name}</b> (${p.code || '-'} | ${p.firma || '-'})\n`;
+                    message += `Soni: ${p.quantity} | K: ${p.cost_price} | S: ${p.sale_price}\n\n`;
                 });
-                await ctx.reply(message);
+                // Truncate if too long (simple check)
+                if (message.length > 4000) message = message.substring(0, 4000) + "...";
+
+                await ctx.reply(message, { parse_mode: "HTML" });
             }
         } catch (e) {
             console.error(e);
-            await ctx.reply("Search failed.");
+            await ctx.reply("❌ Qidirishda xatolik.");
         }
         ctx.session.step = 'idle';
         return;

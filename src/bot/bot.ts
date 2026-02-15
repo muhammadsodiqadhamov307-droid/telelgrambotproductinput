@@ -22,9 +22,35 @@ const mainMenu = new Keyboard()
     .text("📄 Report Excel").text("🖨 Print View").row()
     .text("🗑 Delete Last").text("🔍 Search").resized();
 
-bot.command('start', (ctx) => ctx.reply('Welcome! Use the menu below or send a voice message.', { reply_markup: mainMenu }));
-bot.command('help', (ctx) => ctx.reply('Send a voice message like "Product: Apple, Qty: 10, Price: 50".'));
-bot.command('help', (ctx) => ctx.reply('Send a voice message like "Product: Apple, Qty: 10, Price: 50".'));
+bot.command("start", async (ctx) => {
+    await ctx.reply(
+        "Assalomu alaykum! 👋\n\n" +
+        "Men mahsulotlarni kiritishga yordam beradigan botman.\n" +
+        "Ovozli xabar yuboring va men uni Excelga tayyorlab beraman.\n\n" +
+        "Buyruqlar:\n" +
+        "/help - Yordam",
+        {
+            reply_markup: {
+                keyboard: [
+                    [{ text: "➕ Mahsulot qo'shish (Ovozli)" }],
+                    [{ text: "📄 Excel Hisobot" }, { text: "🖨 Ko'rish" }],
+                    [{ text: "🗑 Oxirgisini o'chirish" }, { text: "🔍 Qidirish" }]
+                ],
+                resize_keyboard: true
+            }
+        }
+    );
+});
+
+bot.command("help", async (ctx) => {
+    await ctx.reply(
+        "Yordam:\n" +
+        "1. 🎤 Ovozli xabar yuboring (Masalan: 'Lacetti zupchatka powergrip, kodi 5499, 10 dona, kelish 10.4 dollar, sotish 13 dollar').\n" +
+        "2. 🤖 Men uni tahlil qilib, tasdiqlash uchun yuboraman.\n" +
+        "3. ✅ 'Saqlash' tugmasini bosing.\n" +
+        "4. 📄 'Excel Hisobot' orqali faylni yuklab oling."
+    );
+});
 
 // Error handling
 bot.catch((err) => {
