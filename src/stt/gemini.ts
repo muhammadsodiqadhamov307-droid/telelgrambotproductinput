@@ -72,7 +72,7 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
        - **DEFAULT QUANTITY IS NULL**: If the user does NOT say a quantity ("10 ta", "2 shtuk"), do **NOT** assume 1. Return null.
        - **Ambiguity**: "10 ta 5000" -> Qty: 10, Price: 5000.
     7. **Spelling Normalization (MANDATORY)**:
-       - **Cars**: "Neksya", "Neksiya" -> **"Nexia"**. "Kobalt" -> **"Cobalt"**. "Lasetti" -> **"Lacetti"**. "Jentra" -> **"Gentra"**. "Tiko" -> **"Tico"**.
+       - **Cars**: "Neksya", "Neksiya" -> **"Nexia"**. "Kobalt" -> **"Cobalt"**. "Lasetti", "Lacetty" -> **"Lacetti"**. "Jentra" -> **"Gentra"**. "Tiko" -> **"Tico"**.
        - **Products**: "kollektor", "kollekter" -> **"kallektor"**. "zupchatka" -> "**Zupchatka"**. "robochiy", "rabochey" -> **"rabochiy"**.
 
     Return a valid JSON array of objects.
@@ -153,7 +153,7 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
                 // Strict Car Model Normalization via Code (Safety Net)
                 if (cat.includes('nexia') || cat.includes('neksiya') || cat.includes('neksya')) p.category = 'Nexia';
                 else if (cat.includes('cobalt') || cat.includes('kobalt')) p.category = 'Cobalt';
-                else if (cat.includes('lacetti') || cat.includes('lasetti')) p.category = 'Lacetti';
+                else if (cat.includes('lacetti') || cat.includes('lasetti') || cat.includes('lacetty')) p.category = 'Lacetti';
                 else if (cat.includes('gentra') || cat.includes('jentra')) p.category = 'Gentra';
                 else if (cat.includes('spark')) p.category = 'Spark';
                 else if (cat.includes('damas')) p.category = 'Damas';
