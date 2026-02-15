@@ -42,6 +42,7 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
         - **ONLY apply these specific fixes**: "kollektor"/"kollekter" -> "kallektor", "robochiy"/"rabochey" -> "rabochiy".
     - category (string): Car Model (e.g., "Spark", "Cobalt", "Lacetti", "Damas", "Nexia").
     - firma (string): Brand/Manufacturer (e.g., "Powergrip", "Gates", "Vesmo", "GMB", "Valeo").
+        - **CRITICAL**: Car model names (Nexia, Cobalt, Spark, Lacetti, Damas, Gentra, Matiz, Tico, Malibu) can NEVER be the firma. They are ONLY category.
         - *Hint*: If a word looks like a brand name, map it here.
     - code (string): Part Number / Code (e.g., "5499", "670").
         - *Hint*: Usually a standalone number or alphanumeric code, distinct from quantity/price.
@@ -55,6 +56,7 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
     1. **Structure is Flexible**: Users might say "Spark kallektor 10 ta" OR "10 ta kallektor Spark uchun". You must figure it out.
     2. **Identify the Car Model**: Words like "Spark", "Cobalt", "Gentra", "Nexia", "Malibu" are almost ALWAYS the **Category**.
        - **Include Numbers**: If you hear "Malibu bir", "Nexia 2", "Nexia ikki", the number is PART OF THE CAR MODEL. Output: "Malibu 1", "Nexia 2".
+       - **NEVER put car models in firma field**: Nexia is a car, NOT a brand.
     3. **Identify the Brand**: Words like "Gates", "Powergrip", "Vesmo" are the **Firma**.
     4. **Separate Name from Price**:
        - "Kallektor prokladka 5 dollar" -> Name: "Kallektor prokladka", Cost: 5.
