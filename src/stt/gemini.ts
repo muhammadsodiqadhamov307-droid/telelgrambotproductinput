@@ -57,9 +57,8 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
        - "milliy" or "ming" -> multiply by 1000 if context implies price.
        - **IMPORTANT**: If a number (quantity/price) is NOT mentioned, set it to null. Do NOT default to 0.
     6. **Currency**:
-       - "dollar", "$", "u.e." -> "USD"
-       - "sum", "so'm", "ming" -> "UZS"
-       - Default to "UZS" if ambiguous and large number. "USD" if small number (< 1000) or decimal.
+       - **ALWAYS** set currency to "USD". Even if they say "sum" or nothing, assume it is Dollar.
+       - The user wants EVERYTHING in Dollars.
     7. **Spelling Normalization**:
        - "kollektor", "kallekter", "kollekter" -> **"kallektor"** (Always use this standard spelling).
        - "zupchatka" -> "Zupchatka" (Capitalize).
@@ -99,6 +98,9 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
                 // Capitalize first letter
                 p.name = p.name.charAt(0).toUpperCase() + p.name.slice(1);
             }
+            // Force Currency to USD
+            p.currency = 'USD';
+
             return p;
         });
 
