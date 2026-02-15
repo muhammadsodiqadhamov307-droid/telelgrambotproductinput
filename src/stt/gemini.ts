@@ -133,6 +133,10 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
                     .replace(/kollekter/gi, 'kallektor')
                     .replace(/kallekter/gi, 'kallektor');
 
+                // Force "rabochiy"
+                p.name = p.name.replace(/robochiy/gi, 'rabochiy')
+                    .replace(/rabochey/gi, 'rabochiy');
+
                 // Capitalize first letter
                 p.name = p.name.charAt(0).toUpperCase() + p.name.slice(1);
             }
@@ -147,6 +151,7 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
                 else if (cat.includes('spark')) p.category = 'Spark';
                 else if (cat.includes('damas')) p.category = 'Damas';
                 else if (cat.includes('matiz')) p.category = 'Matiz';
+                else if (cat.includes('tico') || cat.includes('tiko')) p.category = 'Tico';
             }
 
             // Force Currency to USD
