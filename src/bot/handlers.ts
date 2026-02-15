@@ -96,7 +96,9 @@ bot.callbackQuery("confirm_save", async (ctx) => {
             });
         }
 
-        const savedToSheets = await googleSheetsService.appendProducts(ctx.session.productsToSave);
+        const user = ctx.from;
+        const userName = user.username ? `@${user.username}` : user.first_name;
+        const savedToSheets = await googleSheetsService.appendProducts(ctx.session.productsToSave, userName);
 
         await ctx.answerCallbackQuery("Muvaffaqiyatli saqlandi!");
 
