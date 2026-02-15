@@ -10,7 +10,8 @@ export const generateProductReport = async (products: Product[]): Promise<string
     worksheet.columns = [
         { header: '#', key: 'index', width: 5 },
         { header: 'Maxsulot nomi', key: 'name', width: 30 },
-        { header: 'kodi', key: 'code', width: 10 },
+        { header: 'Firma', key: 'firma', width: 20 },
+        { header: 'Kodi', key: 'code', width: 10 },
         { header: 'mashina turi', key: 'category', width: 15 },
         { header: 'soni', key: 'quantity', width: 8 },
         { header: 'kelish narxi', key: 'cost_price', width: 12 },
@@ -63,6 +64,7 @@ export const generateProductReport = async (products: Product[]): Promise<string
         worksheet.addRow({
             index: index + 1,
             name: p.name,
+            firma: p.firma || null,
             code: p.code,
             category: p.category,
             quantity: p.quantity === 0 ? null : p.quantity, // Display blank if 0
