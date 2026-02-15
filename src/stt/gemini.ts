@@ -6,7 +6,8 @@ import { ProductDraft } from '../bot/context';
 dotenv.config();
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite-preview-02-05" });
+// User requested specific ID: gemini-2.5-flash-lite
+const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 
 export const transcribeAndParse = async (audioPath: string): Promise<ProductDraft[]> => {
     const audioData = fs.readFileSync(audioPath);
