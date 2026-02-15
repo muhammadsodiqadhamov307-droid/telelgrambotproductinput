@@ -23,28 +23,31 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
     Listen to the audio which contains product information in naturally spoken Uzbek, Russian, or English.
     
     Extract the following fields for each product mentioned:
-    - name (string)
-    - category (string)
-    - code (string, SKU)
-    - quantity (number, integer)
-    - cost_price (number)
-    - sale_price (number)
+    - name (string: "Maxsulot nomi")
+    - category (string: "Mashina turi" / Car Type)
+    - code (string: "Kodi")
+    - quantity (number, integer: "Soni")
+    - cost_price (number: "Kelish narxi")
+    - sale_price (number: "Sotish narxi")
     - currency (string: "UZS" or "USD")
 
     **Crucial Parsing Rules:**
-    1. **Language**: High proficiency in Uzbek is required. Handle dialects/mixed speech.
-    2. **Numbers**: Parse "25 ming" as 25000, "2.5 million" as 2500000.
-    3. **Currency**:
-       - If price is in **So'm** (e.g., "ming", "so'm", "sum"), set currency to "UZS".
-       - If price is in **Dollars** (e.g., "dollar", "$", "u.e."), set currency to "USD".
-       - DO NOT CONVERT CURRENCIES. Keep the original number and set the currency field.
-       - If ambiguous, default to "UZS".
+    1. **Language**: High proficiency in Uzbek/Russian mixed speech (auto parts context).
+    2. **Category**: Often refers to the Car Model (e.g., "Lacetti", "Damas", "Cobalt"). Map this to `category`.
+    3. **Numbers**: 
+       - Support DECIMALS. "10.4", "2.7" should be parsed exactly as numbers.
+       - "25 ming" -> 25000.
+    4. **Currency**:
+       - If price is small (e.g. 1.2, 10.5, 50) and no currency mentioned, it is likely **USD** if consistent with car parts logic, OR check for "dollar" context. But usually small numbers like 1-100 are dollars, large numbers like 10000+ are sums.
+       - "dollar", "$", "u.e." -> "USD"
+       - "sum", "so'm", "ming" -> "UZS"
+       - Default to "UZS" if ambiguous and large number. Default "USD" if small number (< 1000).
     
     Return a valid JSON array of objects.
     Example Output:
     [
-        { "name": "Bodyfix", "category": "Yelim", "code": "BF10", "quantity": 12, "cost_price": 25000, "sale_price": 32000, "currency": "UZS" },
-        { "name": "iPhone", "category": "Phone", "code": "IP15", "quantity": 1, "cost_price": 800, "sale_price": 950, "currency": "USD" }
+        { "name": "Zupchatka", "category": "Lacetti", "code": "5499", "quantity": 10, "cost_price": 10.4, "sale_price": 13, "currency": "USD" },
+        { "name": "Kallektor", "category": "Spark", "code": "670", "quantity": 5, "cost_price": 1.1, "sale_price": 1.7, "currency": "USD" }
     ]
     `;
 

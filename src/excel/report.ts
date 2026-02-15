@@ -9,17 +9,17 @@ export const generateProductReport = async (products: Product[]): Promise<string
 
     worksheet.columns = [
         { header: '#', key: 'index', width: 5 },
-        { header: 'Date', key: 'created_at', width: 15 },
-        { header: 'Name', key: 'name', width: 20 },
-        { header: 'Category', key: 'category', width: 15 },
-        { header: 'Code', key: 'code', width: 10 },
-        { header: 'Quantity', key: 'quantity', width: 10 },
-        { header: 'Currency', key: 'currency', width: 8 },
-        { header: 'Cost Price', key: 'cost_price', width: 12 },
-        { header: 'Sale Price', key: 'sale_price', width: 12 },
-        { header: 'Total Cost', key: 'total_cost', width: 15 },
-        { header: 'Total Sale', key: 'total_sale', width: 15 },
-        { header: 'Profit', key: 'profit', width: 15 },
+        { header: 'Sana', key: 'created_at', width: 15 },
+        { header: 'Maxsulot nomi', key: 'name', width: 25 },
+        { header: 'Kodi', key: 'code', width: 10 },
+        { header: 'Mashina turi', key: 'category', width: 15 },
+        { header: 'Soni', key: 'quantity', width: 8 },
+        { header: 'Kelish narxi', key: 'cost_price', width: 12 },
+        { header: 'Sotish narxi', key: 'sale_price', width: 12 },
+        { header: 'Valyuta', key: 'currency', width: 8 },
+        { header: 'Jami Kelish', key: 'total_cost', width: 15 },
+        { header: 'Jami Sotish', key: 'total_sale', width: 15 },
+        { header: 'Foyda', key: 'profit', width: 15 },
     ];
 
     // Style Header
