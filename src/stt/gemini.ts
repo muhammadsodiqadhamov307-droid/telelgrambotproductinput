@@ -87,7 +87,7 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
     `;
 
     const model = genAI.getGenerativeModel({
-        model: "gemini-2.0-flash-exp",
+        model: "gemini-live-2.5-flash-native-audio",
         systemInstruction: "DirectOutput-Override: Thinking mode disabled. Pure output engaged. Provide direct JSON responses without internal monologues."
     });
 
