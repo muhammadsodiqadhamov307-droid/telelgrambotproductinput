@@ -7,6 +7,7 @@ import { ProductRepository } from '../db/productRepository';
 import { generateProductReport } from '../excel/report';
 import { InlineKeyboard, InputFile } from 'grammy';
 import { BotContext } from './context';
+import { googleSheetsService } from '../services/googleSheets';
 
 bot.on('message:voice', async (ctx) => {
     const voice = ctx.message.voice;
@@ -95,8 +96,18 @@ bot.callbackQuery("confirm_save", async (ctx) => {
             });
         }
 
+        const savedToSheets = await googleSheetsService.appendProducts(ctx.session.productsToSave);
+
         await ctx.answerCallbackQuery("Muvaffaqiyatli saqlandi!");
-        await ctx.editMessageText(`✅ ${ctx.session.productsToSave.length} ta mahsulot saqlandi!`);
+
+        let msg = `✅ ${ctx.session.productsToSave.length} ta mahsulot bazaga saqlandi!`;
+        if (savedToSheets) {
+            msg += `\n📊 Google Sheets ga ham yozildi.`;
+        } else if (process.env.GOOGLE_SHEET_ID) {
+            msg += `\n⚠️ Google Sheets ga yozishda xatolik (loglarni tekshiring).`;
+        }
+
+        await ctx.editMessageText(msg);
         ctx.session.productsToSave = [];
     } catch (e) {
         console.error(e);
