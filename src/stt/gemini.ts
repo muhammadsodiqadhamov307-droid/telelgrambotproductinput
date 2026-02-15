@@ -71,7 +71,7 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
        - **Ambiguity**: "10 ta 5000" -> Qty: 10, Price: 5000.
     7. **Spelling Normalization (MANDATORY)**:
        - **Cars**: "Neksya", "Neksiya" -> **"Nexia"**. "Kobalt" -> **"Cobalt"**. "Lasetti", "Lacetty" -> **"Lacetti"**. "Jentra" -> **"Gentra"**. "Tiko" -> **"Tico"**.
-       - **Products**: "kollektor", "kollekter" -> **"kallektor"**. "zupchatka" -> "**Zupchatka"**. "robochiy", "rabochey" -> **"rabochiy"**.
+       - **Products**: "kollektor", "kollekter" -> **"kallektor"**. "zupchatka" -> "**Zupchatka"**. "robochiy", "rabochey" -> **"rabochiy"**. "kal'so", "kalso" -> **"Kalso"**.
 
     Return a valid JSON array of objects.
 
@@ -79,8 +79,8 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
     Input: "Malibu bir kallektor"
     Output: [{"name": "Kallektor", "category": "Malibu 1", "currency": "USD"}]
 
-    Input: "Neksya kallektor" (NO quantity mentioned)
-    Output: [{"name": "Kallektor", "category": "Nexia", "quantity": null, "currency": "USD"}]
+    Input: "Neksya sons kal'so"
+    Output: [{"name": "Kalso", "category": "Nexia Sons", "quantity": null, "currency": "USD"}]
 
     Input: "Kobalt amortizator 10 u 4 dollar"
     Output: [{"name": "Amortizator", "category": "Cobalt", "cost_price": 10.4, "currency": "USD"}]
@@ -153,21 +153,32 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
                 p.name = p.name.replace(/robochiy/gi, 'rabochiy')
                     .replace(/rabochey/gi, 'rabochiy');
 
+                // Force "Kalso"
+                p.name = p.name.replace(/kal'so/gi, 'Kalso')
+                    .replace(/kalso/gi, 'Kalso');
+
                 // Capitalize first letter
                 p.name = p.name.charAt(0).toUpperCase() + p.name.slice(1);
             }
 
             if (p.category) {
-                const cat = p.category.toLowerCase();
-                // Strict Car Model Normalization via Code (Safety Net)
-                if (cat.includes('nexia') || cat.includes('neksiya') || cat.includes('neksya')) p.category = 'Nexia';
-                else if (cat.includes('cobalt') || cat.includes('kobalt')) p.category = 'Cobalt';
-                else if (cat.includes('lacetti') || cat.includes('lasetti') || cat.includes('lacetty')) p.category = 'Lacetti';
-                else if (cat.includes('gentra') || cat.includes('jentra')) p.category = 'Gentra';
-                else if (cat.includes('spark')) p.category = 'Spark';
-                else if (cat.includes('damas')) p.category = 'Damas';
-                else if (cat.includes('matiz')) p.category = 'Matiz';
-                else if (cat.includes('tico') || cat.includes('tiko')) p.category = 'Tico';
+                let cat = p.category; // Keep original structure (Don't lowercase yet to preserve formatting if needed)
+
+                // Smart Normalization: Fix car name spelling BUT preserve the rest (numbers, variants)
+                // We use regex replace to change ONLY the car name part.
+
+                cat = cat.replace(/neksya|neksiya/gi, 'Nexia');
+                cat = cat.replace(/kobalt/gi, 'Cobalt');
+                cat = cat.replace(/lasetti|lacetty/gi, 'Lacetti');
+                cat = cat.replace(/jentra/gi, 'Gentra');
+                cat = cat.replace(/tiko/gi, 'Tico');
+
+                // Ensure proper capitalization for known brands if the prompt missed it
+                cat = cat.replace(/\bspark\b/gi, 'Spark');
+                cat = cat.replace(/\bdamas\b/gi, 'Damas');
+                cat = cat.replace(/\bmatiz\b/gi, 'Matiz');
+
+                p.category = cat;
             }
 
             // Force Currency to USD
