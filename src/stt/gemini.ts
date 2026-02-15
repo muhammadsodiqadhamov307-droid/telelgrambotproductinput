@@ -99,6 +99,10 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
         }
     }
 
+    if (!result) {
+        throw new Error("Failed to retrieve response from Gemini API after multiple attempts.");
+    }
+
     const response = await result.response;
     const text = response.text();
 
