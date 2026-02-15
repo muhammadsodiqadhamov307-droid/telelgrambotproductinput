@@ -56,27 +56,25 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
     4. **Separate Name from Price**:
        - "Kallektor prokladka 5 dollar" -> Name: "Kallektor prokladka", Cost: 5.
        - The Name usually stops when you hear a Number, a Car Model, or a Brand.
-    5. **Numbers & PRECISION (CRITICAL)**:
-       - **Decimals**: Users actally say "1.5" (bir yarim), "10 u 5" (10 point 5), "10 butun 5".
-       - **Action**: You MUST convert these to 1.5, 10.5. 
-       - **Ambiguity**: If you hear "10 ta 5000", the Integer "10" is QUANTITY, "5000" is PRICE.
-       - **Price detection**: Look for "dollar", "narxi", "sotish", "kelish".
-       - **Small Floats**: Numbers like 1.1, 0.5, 10.7 are ALMOST ALWAYS PRICES (not quantity).
-    6. **Spelling Normalization**:
-       - Always normalize "kollektor", "kollekter" -> **"kallektor"**.
-       - "zupchatka" -> "**Zupchatka**".
+    5. **Numbers, Decimals & Precisions (CRITICAL)**:
+       - **Decimals**: "o'n u to'rt", "10 u 4", "10 butun 4" -> **10.4** (NOT 14).
+       - **Action**: You MUST convert "u" or "butun" to a DOT.
+       - **Small Floats**: Numbers like 1.1, 0.5, 10.7 are ALMOST ALWAYS PRICES.
+    6. **Quantity vs Price**:
+       - **DEFAULT QUANTITY IS NULL**: If the user does NOT say a quantity ("10 ta", "2 shtuk"), do **NOT** assume 1. Return `null`.
+       - **Ambiguity**: "10 ta 5000" -> Qty: 10, Price: 5000.
+    7. **Spelling Normalization (MANDATORY)**:
+       - **Cars**: "Neksya", "Neksiya" -> **"Nexia"**. "Kobalt" -> **"Cobalt"**. "Lasetti" -> **"Lacetti"**. "Jentra" -> **"Gentra"**.
+       - **Products**: "kollektor", "kollekter" -> **"kallektor"**. "zupchatka" -> "**Zupchatka**".
 
     Return a valid JSON array of objects.
 
     **Examples:**
-    Input: "Spark kallektor prokladka 10 ta 1.5 dollardan"
-    Output: [{"name": "Kallektor prokladka", "category": "Spark", "quantity": 10, "cost_price": 1.5, "currency": "USD"}]
+    Input: "Neksya kallektor" (NO quantity mentioned)
+    Output: [{"name": "Kallektor", "category": "Nexia", "quantity": null, "currency": "USD"}]
 
-    Input: "Powergrip remen 50 ta 10 u 3"
-    Output: [{"name": "Remen", "firma": "Powergrip", "quantity": 50, "cost_price": 10.3, "currency": "USD"}]
-
-    Input: "Kobalt amortizator oldi narxi 22.5"
-    Output: [{"name": "Amortizator oldi", "category": "Cobalt", "cost_price": 22.5, "currency": "USD"}]
+    Input: "Kobalt amortizator 10 u 4 dollar"
+    Output: [{"name": "Amortizator", "category": "Cobalt", "cost_price": 10.4, "currency": "USD"}]
     `;
 
     const genAI = getNextGenAI();
@@ -134,6 +132,19 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
                 // Capitalize first letter
                 p.name = p.name.charAt(0).toUpperCase() + p.name.slice(1);
             }
+
+            if (p.category) {
+                const cat = p.category.toLowerCase();
+                // Strict Car Model Normalization via Code (Safety Net)
+                if (cat.includes('nexia') || cat.includes('neksiya') || cat.includes('neksya')) p.category = 'Nexia';
+                else if (cat.includes('cobalt') || cat.includes('kobalt')) p.category = 'Cobalt';
+                else if (cat.includes('lacetti') || cat.includes('lasetti')) p.category = 'Lacetti';
+                else if (cat.includes('gentra') || cat.includes('jentra')) p.category = 'Gentra';
+                else if (cat.includes('spark')) p.category = 'Spark';
+                else if (cat.includes('damas')) p.category = 'Damas';
+                else if (cat.includes('matiz')) p.category = 'Matiz';
+            }
+
             // Force Currency to USD
             p.currency = 'USD';
 
