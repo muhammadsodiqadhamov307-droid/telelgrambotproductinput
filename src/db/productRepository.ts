@@ -66,6 +66,17 @@ export class ProductRepository {
         );
     }
 
+    static async update(id: number, updates: Partial<Product>): Promise<void> {
+        const db = await getDB();
+        const keys = Object.keys(updates).filter(k => k !== 'id' && k !== 'user_id' && k !== 'created_at');
+        if (keys.length === 0) return;
+
+        const setClause = keys.map(k => `${k} = ?`).join(', ');
+        const values = keys.map(k => (updates as any)[k]);
+
+        await db.run(`UPDATE products SET ${setClause} WHERE id = ?`, [...values, id]);
+    }
+
     static async getCategories(userId: number): Promise<string[]> {
         const db = await getDB();
         const rows = await db.all<{ category: string }[]>('SELECT DISTINCT category FROM products WHERE user_id = ? AND category IS NOT NULL', [userId]);

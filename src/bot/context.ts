@@ -15,7 +15,8 @@ export interface SessionData {
     step: 'idle' | 'confirming' | 'editing' | 'searching';
     draftProduct?: ProductDraft;
     productsToSave?: ProductDraft[]; // For multi-product support
-    editingField?: keyof ProductDraft;
+    editingProductId?: number;
+    editingField?: string;
 }
 
 export type BotContext = Context & SessionFlavor<SessionData>;

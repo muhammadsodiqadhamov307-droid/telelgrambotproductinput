@@ -237,6 +237,39 @@ async function handleDeleteLast(ctx: BotContext) {
 
 // Search Logic
 bot.on("message:text", async (ctx, next) => {
+    // Handle Editing Value Input
+    if (ctx.session.step === 'editing' && ctx.session.editingProductId && ctx.session.editingField) {
+        const newValue = ctx.message.text;
+        const productId = ctx.session.editingProductId;
+        const field = ctx.session.editingField;
+
+        try {
+            // Validate number fields
+            let finalValue: string | number = newValue;
+            if (['quantity', 'cost_price', 'sale_price'].includes(field)) {
+                const num = parseFloat(newValue);
+                if (isNaN(num)) {
+                    await ctx.reply("❌ Iltimos, raqam kiriting.");
+                    return;
+                }
+                finalValue = num;
+            }
+
+            await ProductRepository.update(productId, { [field]: finalValue });
+            await ctx.reply(`✅ Muvaffaqiyatli yangilandi!`);
+
+            // Clear session
+            ctx.session.step = 'idle';
+            ctx.session.editingProductId = undefined;
+            ctx.session.editingField = undefined;
+
+        } catch (e) {
+            console.error(e);
+            await ctx.reply("❌ Yangilashda xatolik.");
+        }
+        return;
+    }
+
     if (ctx.session.step === 'searching') {
         const query = ctx.message.text;
         if (!ctx.from) return;
@@ -247,15 +280,26 @@ bot.on("message:text", async (ctx, next) => {
             if (results.length === 0) {
                 await ctx.reply("❌ Hech narsa topilmadi.");
             } else {
-                let message = `🔍 <b>Topilgan mahsulotlar</b> (${results.length} ta):\n\n`;
-                results.forEach(p => {
-                    message += `<b>${p.name}</b> (${p.code || '-'} | ${p.firma || '-'})\n`;
-                    message += `Soni: ${p.quantity} | K: ${p.cost_price} | S: ${p.sale_price}\n\n`;
-                });
-                // Truncate if too long (simple check)
-                if (message.length > 4000) message = message.substring(0, 4000) + "...";
+                await ctx.reply(`🔍 <b>Topilgan mahsulotlar:</b> ${results.length} ta`, { parse_mode: "HTML" });
 
-                await ctx.reply(message, { parse_mode: "HTML" });
+                // Send messages with buttons for each product (limit to first 10 to avoid spam)
+                const limitedResults = results.slice(0, 10);
+                for (const p of limitedResults) {
+                    const message = `<b>${p.name}</b>\n` +
+                        `Firma: ${p.firma || '-'}\n` +
+                        `Kod: ${p.code || '-'}\n` +
+                        `Soni: ${p.quantity} | K: ${p.cost_price} | S: ${p.sale_price}`;
+
+                    const keyboard = new InlineKeyboard()
+                        .text("✏️ Tahrirlash", `edit_prod_${p.id}`)
+                        .text("🗑 O'chirish", `del_prod_${p.id}`);
+
+                    await ctx.reply(message, { parse_mode: "HTML", reply_markup: keyboard });
+                }
+
+                if (results.length > 10) {
+                    await ctx.reply("... va yana boshqalar. Aniqroq qidirishga harakat qiling.");
+                }
             }
         } catch (e) {
             console.error(e);
