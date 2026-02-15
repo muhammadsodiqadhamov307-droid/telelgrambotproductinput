@@ -34,12 +34,13 @@ export class GoogleSheetsService {
                 this.initialized = true;
             }
 
+            const sheet = this.doc.sheetsByIndex[0]; // Restored definition
             await sheet.loadHeaderRow(); // Ensure headers are loaded
             const headerValues = sheet.headerValues;
 
             // Helper to find the actual header key case-insensitively
             const findHeader = (keyToCheck: string): string => {
-                const found = headerValues.find(h => h.trim().toLowerCase() === keyToCheck.trim().toLowerCase());
+                const found = headerValues.find((h: string) => h.trim().toLowerCase() === keyToCheck.trim().toLowerCase());
                 return found || keyToCheck; // Fallback to provided key if strict match fails (google-spreadsheet might handle it)
             }
 
