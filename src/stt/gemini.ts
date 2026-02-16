@@ -219,6 +219,7 @@ export const parseImage = async (imagePath: string): Promise<ProductDraft[]> => 
 
     **Fields to Extract (Same as voice rules):**
     - name (string): Product name (e.g., "Zupchatka", "Amortizator", "Kallektor", "Rabochiy").
+      - **TRANSLITERATION**: If any text is in Cyrillic (e.g., "Амортизатор"), you MUST transliterate it to Uzbek Latin (e.g., "Amortizator").
       - Preserve original spelling unless it matches "kollektor"->"kallektor", "robochiy"->"rabochiy".
     - category (string): Car Model (e.g., "Spark", "Cobalt", "Nexia", "Best", "Sons", "Lacetti", "Damas", "Gentra", "Matiz", "Tico", "Malibu").
     - firma (string): Brand (e.g., "Gates", "Wesmo", "GMB", "Valeo", "Powergrip").
