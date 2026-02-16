@@ -39,8 +39,9 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
     - firma (string): Brand/Manufacturer (e.g., "Powergrip", "Gates", "Wesmo", "GMB", "Valeo").
         - **CRITICAL**: Car model names (Nexia, Cobalt, Spark, Lacetti, Damas, Gentra, Matiz, Tico, Malibu) can NEVER be the firma. They are ONLY category.
         - *Hint*: If a word looks like a brand name, map it here.
-    - code (string): Part Number / Code (e.g., "5499", "670").
+    - code (string): Part Number / Code (e.g., "5499", "670", "1.2", "2.1").
         - *Hint*: Usually a standalone number or alphanumeric code, distinct from quantity/price.
+        - *Decimal Codes*: Users may say "bir u ikki" (1.2) or "ikkiyu bir" (2.1) as a code. Treat these as "1.2", "2.1".
     - quantity (number): The count/amount (e.g., "10 ta", "100 dona", "50").
         - *Hint*: Integer numbers are usually quantity.
     - cost_price (number): "Kelish narxi" / Cost (e.g., "5 dollar", "10.5").
@@ -69,7 +70,8 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
        - **Small Floats**: Numbers like 1.1, 0.5, 10.7 are ALMOST ALWAYS PRICES.
     6. **Quantity vs Price**:
        - **DEFAULT QUANTITY IS NULL**: If the user does NOT say a quantity ("10 ta", "2 shtuk"), do **NOT** assume 1. Return null.
-       - **Ambiguity**: "10 ta 5000" -> Qty: 10, Price: 5000.
+        - **Ambiguity**: "10 ta 5000" -> Qty: 10, Price: 5000.
+        - **Decimal Codes vs Price**: If a small float like "1.2" or "2.1" appears WITHOUT currency or strict price context, and fits the pattern of a Part Code, treat it as a Code.
     7. **Spelling Normalization (MANDATORY)**:
        - **Cars**: "Neksya", "Neksiya" -> **"Nexia"**. "Kobalt" -> **"Cobalt"**. "Lasetti", "Lacetty" -> **"Lacetti"**. "Jentra" -> **"Gentra"**. "Tiko" -> **"Tico"**.
        - **Products**: "kollektor", "kollekter" -> **"kallektor"**. "zupchatka" -> "**Zupchatka"**. "robochiy", "rabochey" -> **"rabochiy"**. "kal'so", "kalso" -> **"Kalso"**.
