@@ -14,7 +14,7 @@ export interface ProductDraft {
 export interface SessionData {
     step: 'idle' | 'confirming' | 'editing' | 'searching';
     draftProduct?: ProductDraft;
-    productsToSave?: ProductDraft[]; // For multi-product support
+    pendingApprovals?: Record<string, ProductDraft[]>; // Key: unique ID (e.g., "msg_<messageId>")
     editingProductId?: number;
     editingField?: string;
 }

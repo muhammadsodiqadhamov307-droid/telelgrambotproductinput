@@ -41,10 +41,12 @@ bot.on('message:voice', async (ctx) => {
             return;
         }
 
-        // Save to session for confirmation
-        ctx.session.productsToSave = products;
+        // Save to session with unique ID (message ID)
+        if (!ctx.session.pendingApprovals) ctx.session.pendingApprovals = {};
+        const batchId = ctx.message.message_id.toString();
+        ctx.session.pendingApprovals[batchId] = products;
 
-        const validProducts = ctx.session.productsToSave;
+        const validProducts = ctx.session.pendingApprovals[batchId];
         let message = `📝 <b>Tasdiqlash</b> (${validProducts.length} ta mahsulot):\n\n`;
 
         validProducts.forEach((p, i) => {
@@ -57,10 +59,9 @@ bot.on('message:voice', async (ctx) => {
             message += `Sotish: ${p.sale_price || '-'} ${p.currency || 'UZS'}\n\n`;
         });
 
-        // Inline Keyboard
         const keyboard = new InlineKeyboard()
-            .text("✅ Saqlash", "confirm_save")
-            .text("❌ Bekor qilish", "cancel_save");
+            .text("✅ Saqlash", `confirm_save_${batchId}`)
+            .text("❌ Bekor qilish", `cancel_save_${batchId}`);
 
         await ctx.reply(message, {
             reply_markup: keyboard,
@@ -73,8 +74,11 @@ bot.on('message:voice', async (ctx) => {
     }
 });
 
-bot.callbackQuery("confirm_save", async (ctx) => {
-    if (!ctx.session.productsToSave || ctx.session.productsToSave.length === 0) {
+bot.callbackQuery(/^confirm_save_(\d+)$/, async (ctx) => {
+    const batchId = ctx.match[1];
+    const productsToSave = ctx.session.pendingApprovals?.[batchId];
+
+    if (!productsToSave || productsToSave.length === 0) {
         await ctx.answerCallbackQuery("Saqlash uchun mahsulot yo'q.");
         await ctx.editMessageText("⏳ Sessiya muddati tugagan yoki bo'sh.");
         return;
@@ -82,7 +86,7 @@ bot.callbackQuery("confirm_save", async (ctx) => {
 
     try {
         const userId = ctx.from.id;
-        for (const p of ctx.session.productsToSave) {
+        for (const p of productsToSave) {
             await ProductRepository.create({
                 user_id: userId,
                 name: p.name || 'Nomsiz',
@@ -98,11 +102,11 @@ bot.callbackQuery("confirm_save", async (ctx) => {
 
         const user = ctx.from;
         const userName = user.username ? `@${user.username}` : user.first_name;
-        const savedToSheets = await googleSheetsService.appendProducts(ctx.session.productsToSave, userName);
+        const savedToSheets = await googleSheetsService.appendProducts(productsToSave, userName);
 
         await ctx.answerCallbackQuery("Muvaffaqiyatli saqlandi!");
 
-        let msg = `✅ ${ctx.session.productsToSave.length} ta mahsulot bazaga saqlandi!`;
+        let msg = `✅ ${productsToSave.length} ta mahsulot bazaga saqlandi!`;
         if (savedToSheets) {
             msg += `\n📊 Google Sheets ga ham yozildi.`;
         } else if (process.env.GOOGLE_SHEET_ID) {
@@ -110,15 +114,23 @@ bot.callbackQuery("confirm_save", async (ctx) => {
         }
 
         await ctx.editMessageText(msg);
-        ctx.session.productsToSave = [];
+
+        // Clean up this specific batch
+        if (ctx.session.pendingApprovals) {
+            delete ctx.session.pendingApprovals[batchId];
+        }
+
     } catch (e) {
         console.error(e);
         await ctx.answerCallbackQuery("Saqlashda xatolik.");
     }
 });
 
-bot.callbackQuery(["cancel_save", "cancel_all"], async (ctx) => {
-    ctx.session.productsToSave = [];
+bot.callbackQuery(/^cancel_save_(\d+)$/, async (ctx) => {
+    const batchId = ctx.match[1];
+    if (ctx.session.pendingApprovals) {
+        delete ctx.session.pendingApprovals[batchId];
+    }
     await ctx.answerCallbackQuery("Bekor qilindi");
     await ctx.editMessageText("❌ Operatsiya bekor qilindi.");
 });
