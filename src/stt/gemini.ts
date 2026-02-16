@@ -36,7 +36,7 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
         - **PRESERVE ALL WORDS**: "Nufta glavniy" -> "Nufta glavniy" (keep BOTH words). Do NOT drop any words.
         - **ONLY apply these specific fixes**: "kollektor"/"kollekter" -> "kallektor", "robochiy"/"rabochey" -> "rabochiy".
     - category (string): Car Model (e.g., "Spark", "Cobalt", "Lacetti", "Damas", "Nexia", "Best").
-    - firma (string): Brand/Manufacturer (e.g., "Powergrip", "Gates", "Vesmo", "GMB", "Valeo").
+    - firma (string): Brand/Manufacturer (e.g., "Powergrip", "Gates", "Wesmo", "GMB", "Valeo").
         - **CRITICAL**: Car model names (Nexia, Cobalt, Spark, Lacetti, Damas, Gentra, Matiz, Tico, Malibu) can NEVER be the firma. They are ONLY category.
         - *Hint*: If a word looks like a brand name, map it here.
     - code (string): Part Number / Code (e.g., "5499", "670").
@@ -59,7 +59,7 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
        - Include ALL descriptive words: "Nufta rabochiy silindr" -> name: "Nufta rabochiy silindr" (keep "Nufta").
        - **EXCLUDE car model names from product name**: "Lacetti kallektor" -> name: "Kallektor", category: "Lacetti" (NOT "Lacetti kallektor").
        - Don't drop prefixes or adjectives that describe the product.
-    4. **Identify the Brand**: Words like "Gates", "Powergrip", "Vesmo" are the **Firma**.
+    4. **Identify the Brand**: Words like "Gates", "Powergrip", "Wesmo" are the **Firma**.
     4. **Separate Name from Price**:
        - "Kallektor prokladka 5 dollar" -> Name: "Kallektor prokladka", Cost: 5.
        - The Name usually stops when you hear a Number, a Car Model, or a Brand.
@@ -180,6 +180,12 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
                 cat = cat.replace(/\bmatiz\b/gi, 'Matiz');
 
                 p.category = cat;
+            }
+
+            if (p.firma) {
+                p.firma = p.firma.replace(/Vesmo/gi, 'Wesmo');
+                // Capitalize
+                p.firma = p.firma.charAt(0).toUpperCase() + p.firma.slice(1);
             }
 
             // Force Currency to USD
