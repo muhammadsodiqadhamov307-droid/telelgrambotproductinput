@@ -233,6 +233,7 @@ export const parseImage = async (imagePath: string): Promise<ProductDraft[]> => 
     - "Best" and "Sons" are valid Car Models.
     - "Wesmo" is a valid Brand.
     - Convert decimal codes like "1.2" to strings "1.2".
+    - **Price Rule**: If a row has only ONE price, it is ALWAYS the **cost_price** (Kelish narxi). Leave sale_price empty.
 
     Return a valid JSON array of objects.
     `;
