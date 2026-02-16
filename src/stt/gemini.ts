@@ -201,3 +201,110 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
         throw new Error("Failed to parse product data.");
     }
 };
+
+export const parseImage = async (imagePath: string): Promise<ProductDraft[]> => {
+    const imageData = fs.readFileSync(imagePath);
+    const imagePart: Part = {
+        inlineData: {
+            data: Buffer.from(imageData).toString('base64'),
+            mimeType: "image/jpeg",
+        },
+    };
+
+    const prompt = `
+    You are a smart data entry assistant for an auto parts store in Uzbekistan.
+    Analyze this image (which could be a handwritten note, invoice, or product photo) and extract the list of products.
+
+    **YOUR GOAL**: Extract product details into a structured JSON format.
+
+    **Fields to Extract (Same as voice rules):**
+    - name (string): Product name (e.g., "Zupchatka", "Amortizator", "Kallektor", "Rabochiy").
+      - Preserve original spelling unless it matches "kollektor"->"kallektor", "robochiy"->"rabochiy".
+    - category (string): Car Model (e.g., "Spark", "Cobalt", "Nexia", "Best", "Sons", "Lacetti", "Damas", "Gentra", "Matiz", "Tico", "Malibu").
+    - firma (string): Brand (e.g., "Gates", "Wesmo", "GMB", "Valeo", "Powergrip").
+    - code (string): Part Code (e.g., "5499", "1.2", "2.1").
+    - quantity (number): Count.
+    - cost_price (number): Cost.
+    - sale_price (number): Sale Price.
+    - currency (string): "USD" (Default).
+
+    **Inference Rules:**
+    - Look for rows like "Car Model - Product Name - Qty - Price".
+    - "Best" and "Sons" are valid Car Models.
+    - "Wesmo" is a valid Brand.
+    - Convert decimal codes like "1.2" to strings "1.2".
+
+    Return a valid JSON array of objects.
+    `;
+
+    const model = genAI.getGenerativeModel({
+        model: "gemini-2.5-flash",
+        systemInstruction: "DirectOutput-Override: Thinking mode disabled. Pure output engaged. Provide direct JSON responses without internal monologues."
+    });
+
+    let result;
+    let attempts = 0;
+    const maxAttempts = 3;
+
+    while (attempts < maxAttempts) {
+        try {
+            result = await model.generateContent([prompt, imagePart]);
+            break;
+        } catch (error: any) {
+            attempts++;
+            console.error(`Gemini Image API Error (Attempt ${attempts}/${maxAttempts}):`, error.message);
+            if (attempts >= maxAttempts) throw error;
+            await new Promise(resolve => setTimeout(resolve, 2000 * attempts));
+        }
+    }
+
+    if (!result) throw new Error("Failed to retrieve response from Gemini API.");
+
+    const response = await result.response;
+    const text = response.text();
+    const cleanedText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+
+    try {
+        console.log("Gemini Image Response:", cleanedText);
+        const products = JSON.parse(cleanedText) as ProductDraft[];
+
+        // Re-use processing logic (simplified)
+        return products.map(p => {
+            if (p.name) {
+                p.name = p.name.replace(/kollektor/gi, 'kallektor')
+                    .replace(/kollekter/gi, 'kallektor')
+                    .replace(/kallekter/gi, 'kallektor');
+                p.name = p.name.replace(/robochiy/gi, 'rabochiy')
+                    .replace(/rabochey/gi, 'rabochiy');
+                p.name = p.name.replace(/kal'so/gi, 'Kalso')
+                    .replace(/kalso/gi, 'Kalso');
+                p.name = p.name.charAt(0).toUpperCase() + p.name.slice(1);
+            }
+
+            if (p.category) {
+                let cat = p.category;
+                cat = cat.replace(/neksya|neksiya/gi, 'Nexia');
+                cat = cat.replace(/kobalt/gi, 'Cobalt');
+                cat = cat.replace(/lasetti|lacetty/gi, 'Lacetti');
+                cat = cat.replace(/jentra/gi, 'Gentra');
+                cat = cat.replace(/tiko/gi, 'Tico');
+                cat = cat.replace(/spark/gi, 'Spark'); // strict regex not needed here for simplicity
+                cat = cat.replace(/damas/gi, 'Damas');
+                cat = cat.replace(/matiz/gi, 'Matiz');
+                p.category = cat;
+            }
+
+            if (p.firma) {
+                p.firma = p.firma.replace(/Vesmo/gi, 'Wesmo');
+                p.firma = p.firma.charAt(0).toUpperCase() + p.firma.slice(1);
+            }
+
+            p.currency = 'USD';
+            return p;
+        });
+
+    } catch (error) {
+        console.error("Failed to parse Gemini image response:", text);
+        throw new Error("Failed to parse product data from image.");
+    }
+};

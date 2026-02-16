@@ -1,6 +1,6 @@
 import { bot } from './bot';
 import { downloadFile, convertOggToMp3 } from '../stt/voice';
-import { transcribeAndParse } from '../stt/gemini';
+import { transcribeAndParse, parseImage } from '../stt/gemini';
 import path from 'path';
 import fs from 'fs';
 import { ProductRepository } from '../db/productRepository';
@@ -70,6 +70,69 @@ bot.on('message:voice', async (ctx) => {
 
     } catch (error) {
         console.error("Error processing voice:", error);
+        await ctx.reply("❌ Xatolik yuz berdi. Iltimos qaytadan urinib ko'ring.");
+    }
+});
+
+bot.on('message:photo', async (ctx) => {
+    const photos = ctx.message.photo;
+    // Get the highest resolution photo
+    const photo = photos[photos.length - 1];
+    const file = await ctx.getFile();
+    const filePath = file.file_path;
+    const fileId = photo.file_id;
+
+    const fileUrl = `https://api.telegram.org/file/bot${process.env.BOT_TOKEN}/${filePath}`;
+
+    await ctx.reply("📸 Rasm qabul qilindi. Tahlil qilinmoqda... ⏳");
+
+    try {
+        const tempDir = path.join(__dirname, '../../temp');
+        if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
+
+        const imagePath = path.join(tempDir, `${fileId}.jpg`);
+
+        await downloadFile(fileUrl, imagePath);
+
+        const products = await parseImage(imagePath);
+
+        // Clean up
+        fs.unlinkSync(imagePath);
+
+        if (!products || products.length === 0) {
+            await ctx.reply("⚠️ Rasmdan mahsulotlarni aniqlab bo'lmadi. Aniqroq rasm yuboring.");
+            return;
+        }
+
+        // Reuse Session Logic
+        if (!ctx.session.pendingApprovals) ctx.session.pendingApprovals = {};
+        const batchId = ctx.message.message_id.toString();
+        ctx.session.pendingApprovals[batchId] = products;
+
+        const validProducts = ctx.session.pendingApprovals[batchId];
+        let message = `📝 <b>Tasdiqlash (Rasmdan)</b> (${validProducts.length} ta mahsulot):\n\n`;
+
+        validProducts.forEach((p, i) => {
+            message += `<b>${i + 1}. ${p.name || 'Nomsiz'}</b>\n`;
+            message += `Mashina: ${p.category || '-'}\n`;
+            message += `Firma: ${p.firma || '-'}\n`;
+            message += `Kod: ${p.code || '-'}\n`;
+            message += `Soni: ${p.quantity || '-'}\n`;
+            message += `Kelish: ${p.cost_price || '-'} ${p.currency || 'UZS'}\n`;
+            message += `Sotish: ${p.sale_price || '-'} ${p.currency || 'UZS'}\n\n`;
+        });
+
+        const keyboard = new InlineKeyboard()
+            .text("✅ Saqlash", `confirm_save_${batchId}`)
+            .text("❌ Bekor qilish", `cancel_save_${batchId}`);
+
+        await ctx.reply(message, {
+            reply_markup: keyboard,
+            parse_mode: "HTML"
+        });
+
+    } catch (error) {
+        console.error("Error processing photo:", error);
         await ctx.reply("❌ Xatolik yuz berdi. Iltimos qaytadan urinib ko'ring.");
     }
 });
