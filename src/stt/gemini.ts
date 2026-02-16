@@ -35,7 +35,7 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
         - **CRITICAL**: Write the product name EXACTLY as the user says it. Do NOT translate, change, or "correct" the name.
         - **PRESERVE ALL WORDS**: "Nufta glavniy" -> "Nufta glavniy" (keep BOTH words). Do NOT drop any words.
         - **ONLY apply these specific fixes**: "kollektor"/"kollekter" -> "kallektor", "robochiy"/"rabochey" -> "rabochiy".
-    - category (string): Car Model (e.g., "Spark", "Cobalt", "Lacetti", "Damas", "Nexia").
+    - category (string): Car Model (e.g., "Spark", "Cobalt", "Lacetti", "Damas", "Nexia", "Best").
     - firma (string): Brand/Manufacturer (e.g., "Powergrip", "Gates", "Vesmo", "GMB", "Valeo").
         - **CRITICAL**: Car model names (Nexia, Cobalt, Spark, Lacetti, Damas, Gentra, Matiz, Tico, Malibu) can NEVER be the firma. They are ONLY category.
         - *Hint*: If a word looks like a brand name, map it here.
@@ -49,7 +49,8 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
 
     **Inference Rules (How to understand the user):**
     1. **Structure is Flexible**: Users might say "Spark kallektor 10 ta" OR "10 ta kallektor Spark uchun". You must figure it out.
-    2. **Identify the Car Model**: Words like "Spark", "Cobalt", "Gentra", "Nexia", "Malibu" are almost ALWAYS the **Category**.
+    2. **Identify the Car Model**: Words like "Spark", "Cobalt", "Gentra", "Nexia", "Malibu", "Best" are almost ALWAYS the **Category**.
+       - **SPECIAL RULE**: "Best" is a valid Car unique to us. If user says "Best", the Car Model is "Best".
        - **Include Numbers AND Decimals**: If you hear "Malibu bir", "Nexia 2", "Nexia ikki", the number is PART OF THE CAR MODEL. Output: "Malibu 1", "Nexia 2".
        - **Include Engine Sizes**: "Spark 1.25", "Nexia 1.5" -> Output: "Spark 1.25", "Nexia 1.5" (decimal is part of car model, NOT a price).
        - **Include Trim/Variant Names**: "Nexia Sons", "Cobalt R3" -> Output: "Nexia Sons", "Cobalt R3" (variant names are part of car model).
