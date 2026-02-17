@@ -75,6 +75,11 @@ export const transcribeAndParse = async (audioPath: string): Promise<ProductDraf
     7. **Spelling Normalization (MANDATORY)**:
        - **Cars**: "Neksya", "Neksiya" -> **"Nexia"**. "Kobalt" -> **"Cobalt"**. "Lasetti", "Lacetty" -> **"Lacetti"**. "Jentra" -> **"Gentra"**. "Tiko" -> **"Tico"**.
        - **Products**: "kollektor", "kollekter" -> **"kallektor"**. "zupchatka" -> "**Zupchatka"**. "robochiy", "rabochey" -> **"rabochiy"**. "kal'so", "kalso" -> **"Kalso"**.
+    8. **Auto Parts Lists Recognition (CRITICAL)**:
+       - Users often list multiple auto parts materials in one message. You MUST be smart enough to recognize each item separately.
+       - Common auto parts in Uzbek/Russian/mixed: "amortizator", "remen", "shlang", "filtr", "tormoz", "podshipnik", "prokladka", "svecha", "maslo filtr", "vozdushka filtr", "salon filtr", etc.
+       - Be flexible with mixed language: users might say "Nexia amortizator, Spark remen, Cobalt tormoz kolodka" - treat each as a SEPARATE product.
+       - Process lists naturally: "Spark remen Gates 10 dollar, Nexia kallektor 15 dollar, Cobalt amortizator GMB 20 dollar" -> 3 separate products.
 
     Return a valid JSON array of objects.
 
